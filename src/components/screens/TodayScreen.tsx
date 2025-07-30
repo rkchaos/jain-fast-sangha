@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Star, Flame } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { CheckCircle, Star, Flame, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TodayPrompt {
@@ -14,8 +16,12 @@ interface TodayPrompt {
 }
 
 export function TodayScreen() {
-  const [isCompleted, setIsCompleted] = useState(false);
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [isCheckedOut, setIsCheckedOut] = useState(false);
+  const [selectedFastType, setSelectedFastType] = useState<string>("");
+  const [fastSuccess, setFastSuccess] = useState<boolean | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
+  const { toast } = useToast();
 
   // Sample today's prompt
   const todayPrompt: TodayPrompt = {
@@ -26,11 +32,43 @@ export function TodayScreen() {
     streak: 7
   };
 
+  const fastTypes = [
+    { value: "ekasan", label: "Ekasan (One meal)" },
+    { value: "upwas", label: "Upwas (Complete fast)" },
+    { value: "ayambil", label: "Ayambil (Simple food)" },
+    { value: "navkarsi", label: "Navkarsi (After sunrise)" },
+    { value: "chouvihar", label: "Chouvihar (No night food)" }
+  ];
+
   const handleCheckIn = () => {
-    setIsCompleted(true);
+    if (!selectedFastType) {
+      toast({
+        title: "Please select a fast type",
+        description: "Choose which fast you're performing today before checking in.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setIsCheckedIn(true);
     setShowCelebration(true);
-    // Hide celebration after animation
+    toast({
+      title: "Fast Started! 🙏",
+      description: `You've begun your ${fastTypes.find(f => f.value === selectedFastType)?.label} fast.`
+    });
     setTimeout(() => setShowCelebration(false), 2000);
+  };
+
+  const handleCheckOut = (success: boolean) => {
+    setIsCheckedOut(true);
+    setFastSuccess(success);
+    const message = success 
+      ? "Congratulations! You've successfully completed your fast. Your dedication is inspiring." 
+      : "No worries! Every attempt brings you closer to spiritual growth. Keep practicing.";
+    
+    toast({
+      title: success ? "Fast Completed! 🎉" : "Keep Going! 💪",
+      description: message
+    });
   };
 
   return (
@@ -65,30 +103,97 @@ export function TodayScreen() {
           </CardContent>
         </Card>
 
-        {/* Check-in Button */}
-        <div className="text-center mb-8">
-          {isCompleted ? (
+        {/* Fast Selection and Check-in/out */}
+        <div className="space-y-6 mb-8">
+          {!isCheckedIn ? (
+            <>
+              {/* Fast Type Selection */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-foreground">
+                  Select your fast type for today:
+                </label>
+                <Select value={selectedFastType} onValueChange={setSelectedFastType}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choose your fast type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fastTypes.map((fast) => (
+                      <SelectItem key={fast.value} value={fast.value}>
+                        {fast.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Check-in Button */}
+              <Button
+                onClick={handleCheckIn}
+                variant="checkin"
+                size="xl"
+                className="w-full"
+                disabled={!selectedFastType}
+              >
+                Start Fast
+              </Button>
+            </>
+          ) : !isCheckedOut ? (
             <div className="space-y-4">
               <div className={cn(
-                "inline-flex items-center gap-2 text-primary font-semibold",
+                "text-center space-y-2",
                 showCelebration && "animate-sacred-glow"
               )}>
-                <CheckCircle className="h-6 w-6" />
-                <span>Well done! +{todayPrompt.points} points</span>
+                <div className="flex items-center justify-center gap-2 text-primary font-semibold">
+                  <Clock className="h-5 w-5" />
+                  <span>Fast in Progress</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {fastTypes.find(f => f.value === selectedFastType)?.label}
+                </p>
               </div>
-              <p className="text-muted-foreground text-sm">
-                Your dedication to mindful practice is inspiring
-              </p>
+              
+              {/* Check-out Buttons */}
+              <div className="space-y-3">
+                <p className="text-center text-sm font-medium">
+                  How did your fast go?
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => handleCheckOut(true)}
+                    variant="sacred"
+                    size="lg"
+                    className="flex-1"
+                  >
+                    Completed Successfully ✨
+                  </Button>
+                  <Button
+                    onClick={() => handleCheckOut(false)}
+                    variant="peaceful"
+                    size="lg"
+                    className="flex-1"
+                  >
+                    Did My Best 🙏
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : (
-            <Button
-              onClick={handleCheckIn}
-              variant="checkin"
-              size="xl"
-              className="w-full max-w-sm"
-            >
-              Complete Today's Practice
-            </Button>
+            <div className="text-center space-y-4">
+              <div className={cn(
+                "inline-flex items-center gap-2 font-semibold",
+                fastSuccess ? "text-primary" : "text-peaceful"
+              )}>
+                <CheckCircle className="h-6 w-6" />
+                <span>
+                  {fastSuccess ? `Completed! +${todayPrompt.points} points` : "Practice Logged"}
+                </span>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                {fastSuccess 
+                  ? "Your dedication to spiritual practice is inspiring" 
+                  : "Every step on the spiritual path matters"}
+              </p>
+            </div>
           )}
         </div>
 
