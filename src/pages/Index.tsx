@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { OnboardingScreen } from "@/components/screens/OnboardingScreen";
-import { TodayScreen } from "@/components/screens/TodayScreen";
+import { EnhancedTodayScreen } from "@/components/screens/EnhancedTodayScreen";
 import { CalendarScreen } from "@/components/screens/CalendarScreen";
-import { LeaderboardScreen } from "@/components/screens/LeaderboardScreen";
-import { CommunityScreen } from "@/components/screens/CommunityScreen";
+import { SanghaHubScreen } from "@/components/screens/SanghaHubScreen";
+import { CommunityNewsScreen } from "@/components/screens/CommunityNewsScreen";
+import { MonkNetworkScreen } from "@/components/screens/MonkNetworkScreen";
 import { SettingsScreen } from "@/components/screens/SettingsScreen";
 
 const Index = () => {
@@ -14,17 +15,19 @@ const Index = () => {
   const renderActiveScreen = () => {
     switch (activeTab) {
       case "home":
-        return <TodayScreen />;
+        return <EnhancedTodayScreen />;
       case "calendar":
         return <CalendarScreen />;
-      case "leaderboard":
-        return <LeaderboardScreen />;
+      case "sangha":
+        return <SanghaHubScreen />;
       case "community":
-        return <CommunityScreen />;
+        return <CommunityNewsScreen />;
+      case "spiritual":
+        return <MonkNetworkScreen />;
       case "settings":
         return <SettingsScreen />;
       default:
-        return <TodayScreen />;
+        return <EnhancedTodayScreen />;
     }
   };
 

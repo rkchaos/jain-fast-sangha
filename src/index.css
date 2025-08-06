@@ -23,17 +23,23 @@ All colors MUST be HSL.
     --primary-foreground: 30 15% 98%;
     --primary-glow: 28 85% 68%;
 
-    /* Peaceful Blue Secondary */
-    --secondary: 210 45% 85%;
-    --secondary-foreground: 210 55% 25%;
+    /* Peaceful Jade Secondary */
+    --secondary: 150 35% 82%;
+    --secondary-foreground: 150 45% 28%;
 
     /* Muted Earth Tones */
     --muted: 30 12% 94%;
     --muted-foreground: 20 6% 55%;
 
-    /* Gentle Accent */
-    --accent: 35 80% 88%;
-    --accent-foreground: 35 75% 25%;
+    /* Gentle Jade Accent */
+    --accent: 155 65% 85%;
+    --accent-foreground: 155 70% 30%;
+
+    /* Additional Sacred Colors */
+    --jade: 150 45% 58%;
+    --jade-foreground: 30 15% 98%;
+    --soft-blue: 210 45% 75%;
+    --soft-blue-foreground: 210 55% 25%;
 
     --destructive: 0 65% 55%;
     --destructive-foreground: 30 15% 98%;
@@ -44,8 +50,10 @@ All colors MUST be HSL.
 
     /* Spiritual Gradients */
     --gradient-sacred: linear-gradient(135deg, hsl(28 75% 58%), hsl(28 85% 68%));
-    --gradient-peaceful: linear-gradient(180deg, hsl(210 45% 85%), hsl(210 55% 75%));
+    --gradient-peaceful: linear-gradient(180deg, hsl(150 35% 82%), hsl(150 45% 72%));
     --gradient-dawn: linear-gradient(45deg, hsl(30 15% 98%), hsl(35 80% 88%));
+    --gradient-jade: linear-gradient(135deg, hsl(150 45% 58%), hsl(155 65% 68%));
+    --gradient-soft-blue: linear-gradient(180deg, hsl(210 45% 75%), hsl(210 55% 65%));
     
     /* Sacred Shadows */
     --shadow-sacred: 0 4px 20px hsl(28 75% 58% / 0.15);

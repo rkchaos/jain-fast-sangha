@@ -62,6 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				jade: {
+					DEFAULT: 'hsl(var(--jade))',
+					foreground: 'hsl(var(--jade-foreground))'
+				},
+				'soft-blue': {
+					DEFAULT: 'hsl(var(--soft-blue))',
+					foreground: 'hsl(var(--soft-blue-foreground))'
 				}
 			},
 			borderRadius: {
@@ -126,7 +134,9 @@ export default {
 			backgroundImage: {
 				'gradient-sacred': 'var(--gradient-sacred)',
 				'gradient-peaceful': 'var(--gradient-peaceful)',
-				'gradient-dawn': 'var(--gradient-dawn)'
+				'gradient-dawn': 'var(--gradient-dawn)',
+				'gradient-jade': 'var(--gradient-jade)',
+				'gradient-soft-blue': 'var(--gradient-soft-blue)'
 			},
 			boxShadow: {
 				'sacred': 'var(--shadow-sacred)',
