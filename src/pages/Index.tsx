@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { OnboardingScreen } from "@/components/screens/OnboardingScreen";
-import { EnhancedTodayScreen } from "@/components/screens/EnhancedTodayScreen";
-import { CalendarScreen } from "@/components/screens/CalendarScreen";
+import { EnhancedOnboarding } from "@/components/onboarding/EnhancedOnboarding";
+import { TodayPage } from "@/components/today/TodayPage";
+import { CalendarPage } from "@/components/calendar/CalendarPage";
 import { SanghaHubScreen } from "@/components/screens/SanghaHubScreen";
 import { CommunityNewsScreen } from "@/components/screens/CommunityNewsScreen";
 import { MonkNetworkScreen } from "@/components/screens/MonkNetworkScreen";
@@ -15,9 +15,9 @@ const Index = () => {
   const renderActiveScreen = () => {
     switch (activeTab) {
       case "home":
-        return <EnhancedTodayScreen />;
+        return <TodayPage />;
       case "calendar":
-        return <CalendarScreen />;
+        return <CalendarPage />;
       case "sangha":
         return <SanghaHubScreen />;
       case "community":
@@ -27,12 +27,12 @@ const Index = () => {
       case "settings":
         return <SettingsScreen />;
       default:
-        return <EnhancedTodayScreen />;
+        return <TodayPage />;
     }
   };
 
   if (!isOnboarded) {
-    return <OnboardingScreen onComplete={() => setIsOnboarded(true)} />;
+    return <EnhancedOnboarding onComplete={() => setIsOnboarded(true)} />;
   }
 
   return (

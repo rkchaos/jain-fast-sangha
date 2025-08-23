@@ -1,0 +1,102 @@
+import React, { useState } from 'react';
+import { HeroWelcome } from './HeroWelcome';
+import { SignupForm } from './SignupForm';
+import { OtpVerify } from './OtpVerify';
+import { SanghaSelector } from './SanghaSelector';
+import { toast } from '@/components/ui/use-toast';
+
+interface EnhancedOnboardingProps {
+  onComplete: () => void;
+}
+
+type OnboardingStep = 'welcome' | 'signup' | 'otp' | 'sangha';
+
+export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComplete }) => {
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
+  const [userData, setUserData] = useState<{
+    name?: string;
+    phone?: string;
+    email?: string;
+  }>({});
+
+  const handleWelcome = () => {
+    setCurrentStep('signup');
+  };
+
+  const handleSignup = (data: { name: string; phone: string; email?: string }) => {
+    setUserData(data);
+    setCurrentStep('otp');
+    toast({
+      title: "OTP Sent",
+      description: `Verification code sent to +91 ${data.phone}`,
+    });
+  };
+
+  const handleOtpVerify = (otp: string) => {
+    // Simulate OTP verification
+    if (otp.length >= 4) {
+      setCurrentStep('sangha');
+      toast({
+        title: "Phone Verified ✓",
+        description: "Now let's find your Sangha community",
+      });
+    }
+  };
+
+  const handleOtpResend = () => {
+    toast({
+      title: "OTP Resent",
+      description: "New verification code sent to your phone",
+    });
+  };
+
+  const handleJoinSangha = (sanghaId: string) => {
+    toast({
+      title: "Welcome to Jain Sangha! 🙏",
+      description: "You're all set to begin your spiritual journey",
+    });
+    setTimeout(onComplete, 1500);
+  };
+
+  const handleCreateSangha = (sangha: { name: string; privacy: 'public' | 'private'; description?: string }) => {
+    toast({
+      title: `${sangha.name} Created! 🎉`,
+      description: "Your new Sangha is ready. Invite others to join!",
+    });
+    setTimeout(onComplete, 1500);
+  };
+
+  switch (currentStep) {
+    case 'welcome':
+      return <HeroWelcome onCtaClick={handleWelcome} />;
+    
+    case 'signup':
+      return (
+        <SignupForm 
+          onSendOtp={handleSignup}
+          onBack={() => setCurrentStep('welcome')}
+        />
+      );
+    
+    case 'otp':
+      return (
+        <OtpVerify
+          phone={userData.phone || ''}
+          onVerify={handleOtpVerify}
+          onResend={handleOtpResend}
+        />
+      );
+    
+    case 'sangha':
+      return (
+        <SanghaSelector
+          userId="new-user"
+          onJoin={handleJoinSangha}
+          onCreate={handleCreateSangha}
+        />
+      );
+    
+    default:
+      return <HeroWelcome onCtaClick={handleWelcome} />;
+  }
+};
