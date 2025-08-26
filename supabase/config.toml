@@ -1,9 +1,6 @@
 project_id = "jakdsjslactlnullqtec"
 
-[functions.send_otp]
-verify_jwt = false
-
-[functions.verify_otp]
+[functions.direct_signup]
 verify_jwt = false
 
 [functions.export_vrat_csv]

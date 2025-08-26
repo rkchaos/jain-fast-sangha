@@ -575,33 +575,6 @@ export type Database = {
           },
         ]
       }
-      otp: {
-        Row: {
-          created_at: string | null
-          email: string
-          expires_at: string
-          id: string
-          otp_code: string
-          used: boolean | null
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          expires_at: string
-          id?: string
-          otp_code: string
-          used?: boolean | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          expires_at?: string
-          id?: string
-          otp_code?: string
-          used?: boolean | null
-        }
-        Relationships: []
-      }
       profile_updates: {
         Row: {
           field_changed: string

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { HeroWelcome } from './HeroWelcome';
 import { SignupForm } from './SignupForm';
-import { OtpVerify } from './OtpVerify';
+
 import { SanghaSelector } from './SanghaSelector';
 import { toast } from 'sonner';
 
@@ -9,7 +9,7 @@ interface EnhancedOnboardingProps {
   onComplete: () => void;
 }
 
-type OnboardingStep = 'welcome' | 'signup' | 'otp' | 'sangha';
+type OnboardingStep = 'welcome' | 'signup' | 'sangha';
 
 export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
@@ -23,23 +23,10 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
     setCurrentStep('signup');
   };
 
-  const handleSignup = (data: { name: string; phone: string; email?: string }) => {
+  const handleSignup = (data: { name: string; phone: string; email: string }) => {
     setUserData(data);
-    setCurrentStep('otp');
-    toast.success(`OTP sent to +91 ${data.phone}`);
-  };
-
-  const handleOtpVerify = (success: boolean) => {
-    if (success) {
-      setCurrentStep('sangha');
-      toast.success("Phone verified! Now let's find your Sangha community");
-    } else {
-      toast.error('Verification failed. Please try again.');
-    }
-  };
-
-  const handleOtpResend = () => {
-    toast.success('New OTP sent to your phone');
+    setCurrentStep('sangha');
+    toast.success("Account created! Now let's find your Sangha community");
   };
 
   const handleJoinSangha = (sanghaId: string) => {
@@ -59,19 +46,8 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
     case 'signup':
       return (
         <SignupForm 
-          onSendOtp={handleSignup}
+          onSignup={handleSignup}
           onBack={() => setCurrentStep('welcome')}
-        />
-      );
-    
-    case 'otp':
-      return (
-        <OtpVerify
-          phone={userData.phone || ''}
-          name={userData.name || ''}
-          email={userData.email}
-          onVerify={handleOtpVerify}
-          onResend={handleOtpResend}
         />
       );
     

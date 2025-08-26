@@ -7,11 +7,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface SignupFormProps {
-  onSendOtp: (data: { name: string; phone: string; email?: string }) => void;
+  onSignup: (data: { name: string; phone: string; email: string }) => void;
   onBack?: () => void;
 }
 
-export const SignupForm: React.FC<SignupFormProps> = ({ onSendOtp, onBack }) => {
+export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -32,7 +32,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSendOtp, onBack }) => 
       newErrors.phone = 'Please enter a valid 10-digit phone number';
     }
 
-    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
 
@@ -48,21 +50,25 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSendOtp, onBack }) => 
     const cleanedPhone = formData.phone.replace(/\D/g, '');
     
     try {
-      const { data, error } = await supabase.functions.invoke('send_otp', {
-        body: { phone: cleanedPhone }
+      const { data, error } = await supabase.functions.invoke('direct_signup', {
+        body: { 
+          name: formData.name.trim(),
+          phone: cleanedPhone,
+          email: formData.email.trim()
+        }
       });
 
       if (error) throw error;
 
-      toast.success('OTP sent successfully!');
-      onSendOtp({
+      toast.success('Account created successfully!');
+      onSignup({
         name: formData.name.trim(),
         phone: cleanedPhone,
-        email: formData.email.trim() || undefined
+        email: formData.email.trim()
       });
     } catch (error) {
-      console.error('Error sending OTP:', error);
-      toast.error('Failed to send OTP. Please try again.');
+      console.error('Error creating account:', error);
+      toast.error('Failed to create account. Please try again.');
     }
   };
 
@@ -117,7 +123,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSendOtp, onBack }) => 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email (Optional)</Label>
+              <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
                 type="email"
@@ -131,7 +137,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSendOtp, onBack }) => 
 
             <div className="space-y-3 pt-4">
               <Button type="submit" className="w-full" size="lg">
-                Send OTP
+                Create Account
               </Button>
               {onBack && (
                 <Button type="button" variant="outline" className="w-full" onClick={onBack}>
