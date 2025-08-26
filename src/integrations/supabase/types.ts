@@ -578,37 +578,29 @@ export type Database = {
       otp: {
         Row: {
           created_at: string | null
+          email: string
           expires_at: string
           id: string
           otp_code: string
-          phone: string
           used: boolean | null
         }
         Insert: {
           created_at?: string | null
+          email: string
           expires_at: string
           id?: string
           otp_code: string
-          phone: string
           used?: boolean | null
         }
         Update: {
           created_at?: string | null
+          email?: string
           expires_at?: string
           id?: string
           otp_code?: string
-          phone?: string
           used?: boolean | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "otp_phone_fkey"
-            columns: ["phone"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["phone"]
-          },
-        ]
+        Relationships: []
       }
       profile_updates: {
         Row: {
@@ -648,7 +640,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
-          email: string | null
+          email: string
           id: string
           name: string
           otp_verified: boolean | null
@@ -657,7 +649,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          email?: string | null
+          email: string
           id: string
           name: string
           otp_verified?: boolean | null
@@ -666,7 +658,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          email?: string | null
+          email?: string
           id?: string
           name?: string
           otp_verified?: boolean | null
