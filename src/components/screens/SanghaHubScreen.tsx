@@ -257,6 +257,40 @@ export function SanghaHubScreen() {
             ))}
           </div>
 
+          {/* All Members Section */}
+          <div>
+            <h3 className="text-lg font-semibold mb-3">All Members</h3>
+            <div className="space-y-3">
+              {sanghaGroups.filter(sangha => sangha.isJoined).map((sangha) => (
+                <Card key={sangha.id} className="shadow-gentle">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">{sangha.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-3">
+                      {/* Mock members */}
+                      {['Anita Shah', 'Raj Jain', 'Priya Mehta', 'Kiran Patel', 'You', 'Deepak Shah'].map((member, index) => (
+                        <div key={index} className="flex flex-col items-center space-y-1">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="text-xs">
+                              {member.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs text-center font-medium">{member}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 pt-3 border-t">
+                      <p className="text-xs text-muted-foreground text-center">
+                        {sangha.memberCount} total members
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
           {/* Discover New Sanghas */}
           <div>
             <h3 className="text-lg font-semibold mb-3">Discover Communities</h3>

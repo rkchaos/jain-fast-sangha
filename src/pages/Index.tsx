@@ -6,6 +6,7 @@ import { CalendarPage } from "@/components/calendar/CalendarPage";
 import { SanghaHubScreen } from "@/components/screens/SanghaHubScreen";
 import { CommunityNewsScreen } from "@/components/screens/CommunityNewsScreen";
 import { MonkNetworkScreen } from "@/components/screens/MonkNetworkScreen";
+import { BlogScreen } from "@/components/screens/BlogScreen";
 import { SettingsScreen } from "@/components/screens/SettingsScreen";
 
 const Index = () => {
@@ -20,6 +21,8 @@ const Index = () => {
         return <CalendarPage />;
       case "sangha":
         return <SanghaHubScreen />;
+      case "blogs":
+        return <BlogScreen />;
       case "community":
         return <CommunityNewsScreen />;
       case "spiritual":

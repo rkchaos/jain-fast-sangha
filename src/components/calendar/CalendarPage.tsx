@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Trophy, TrendingUp } from 'lucide-react';
+import { CalendarIcon, Trophy, TrendingUp, Plus } from 'lucide-react';
 import { RetrospectiveTab } from './RetrospectiveTab';
+import { PastEntryModal } from './PastEntryModal';
+import { toast } from '@/components/ui/use-toast';
 
 interface CalendarEvent {
   date: Date;
@@ -26,9 +28,11 @@ const mockEvents: CalendarEvent[] = [
 export const CalendarPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [activeTab, setActiveTab] = useState('calendar');
+  const [showPastEntryModal, setShowPastEntryModal] = useState(false);
+  const [events, setEvents] = useState(mockEvents);
 
   const getEventsForDate = (date: Date) => {
-    return mockEvents.filter(event => 
+    return events.filter(event => 
       event.date.toDateString() === date.toDateString()
     );
   };
@@ -46,10 +50,43 @@ export const CalendarPage: React.FC = () => {
     }
   };
 
+  const handlePastEntry = (data: { type: string; completed: boolean }) => {
+    if (selectedDate) {
+      const newEvent: CalendarEvent = {
+        date: selectedDate,
+        type: 'vrat',
+        title: data.type,
+        completed: data.completed
+      };
+      
+      // Remove any existing event for this date and add the new one
+      const updatedEvents = events.filter(event => 
+        event.date.toDateString() !== selectedDate.toDateString()
+      );
+      updatedEvents.push(newEvent);
+      setEvents(updatedEvents);
+      
+      toast({
+        title: data.completed ? "Entry Saved! ✨" : "Entry Recorded",
+        description: data.completed 
+          ? `Your ${data.type} vrat has been marked as completed.`
+          : `Your ${data.type} attempt has been recorded. Every effort counts!`
+      });
+    }
+  };
+
+  const canAddPastEntry = (date: Date) => {
+    const today = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+    
+    return date >= oneMonthAgo && date < today;
+  };
+
   const modifiers = {
-    hasEvent: mockEvents.map(event => event.date),
-    completed: mockEvents.filter(event => event.completed).map(event => event.date),
-    festival: mockEvents.filter(event => event.type === 'festival').map(event => event.date),
+    hasEvent: events.map(event => event.date),
+    completed: events.filter(event => event.completed).map(event => event.date),
+    festival: events.filter(event => event.type === 'festival').map(event => event.date),
   };
 
   const modifiersStyles = {
@@ -142,9 +179,36 @@ export const CalendarPage: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-center py-4">
-                    No events scheduled for this date
-                  </p>
+                  <div className="text-center py-4 space-y-3">
+                    <p className="text-muted-foreground">
+                      No events recorded for this date
+                    </p>
+                    {canAddPastEntry(selectedDate) && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowPastEntryModal(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Past Entry
+                      </Button>
+                    )}
+                  </div>
+                )}
+                
+                {/* Add Past Entry for existing events */}
+                {getEventsForDate(selectedDate).length > 0 && canAddPastEntry(selectedDate) && (
+                  <div className="mt-4 pt-3 border-t">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setShowPastEntryModal(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Update Entry
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -155,6 +219,16 @@ export const CalendarPage: React.FC = () => {
           <RetrospectiveTab userId="current-user" />
         </TabsContent>
       </Tabs>
+
+      {/* Past Entry Modal */}
+      {selectedDate && (
+        <PastEntryModal
+          visible={showPastEntryModal}
+          onClose={() => setShowPastEntryModal(false)}
+          onSubmit={handlePastEntry}
+          selectedDate={selectedDate}
+        />
+      )}
     </div>
   );
 };

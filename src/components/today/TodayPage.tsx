@@ -47,15 +47,19 @@ export const TodayPage: React.FC = () => {
     });
   };
 
-  const handleCheckOut = () => {
+  const handleCheckOut = (completed: boolean = true) => {
     if (currentCheckIn) {
       setCheckedIn(false);
-      setStreak(prev => prev + 1);
+      if (completed) {
+        setStreak(prev => prev + 1);
+      }
       setCurrentCheckIn(null);
       
       toast({
-        title: "Vrat Completed! ✨",
-        description: `Congratulations! Your ${currentCheckIn.type} vrat is complete. Your streak is now ${streak + 1} days.`,
+        title: completed ? "Vrat Completed! ✨" : "Progress Recorded",
+        description: completed 
+          ? `Congratulations! Your ${currentCheckIn.type} vrat is complete. Your streak is now ${streak + (completed ? 1 : 0)} days.`
+          : "Wasn't able to complete but I am proud of myself for trying. Every effort counts on this spiritual journey.",
       });
     }
   };
@@ -80,6 +84,13 @@ export const TodayPage: React.FC = () => {
         virtue={currentFestival.virtue}
         description="Today's teaching focuses on the fundamental principle of non-violence, extending beyond physical harm to include thoughts and words that may cause suffering to any living being."
       />
+
+      {/* Advertisement Carousel */}
+      <AdCarousel ads={[
+        { id: 'ad-1', mediaUrl: '/placeholder.svg', targetUrl: 'https://example.com/puja-kit', alt: 'Puja Kit' },
+        { id: 'ad-2', mediaUrl: '/placeholder.svg', targetUrl: 'https://example.com/books', alt: 'Jain Books' },
+        { id: 'ad-3', mediaUrl: '/placeholder.svg', targetUrl: 'https://example.com/retreat', alt: 'Spiritual Retreat' }
+      ]} />
 
       {/* Check-in Section */}
       <div className="space-y-4">
@@ -110,14 +121,24 @@ export const TodayPage: React.FC = () => {
               )}
             </div>
             
-            <Button 
-              size="lg"
-              variant="outline"
-              className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-              onClick={handleCheckOut}
-            >
-              Check out
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                size="lg"
+                variant="outline"
+                className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                onClick={() => handleCheckOut(true)}
+              >
+                Completed Successfully ✨
+              </Button>
+              <Button 
+                size="sm"
+                variant="ghost"
+                className="w-full text-muted-foreground"
+                onClick={() => handleCheckOut(false)}
+              >
+                Couldn't complete, but I tried
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -128,16 +149,6 @@ export const TodayPage: React.FC = () => {
         currentStreak={streak}
         onViewHistory={handleViewHistory}
       />
-
-      {/* Leaderboard */}
-      <Leaderboard />
-
-      {/* Advertisement Carousel */}
-      <AdCarousel ads={[
-        { id: 'ad-1', mediaUrl: '/placeholder.svg', targetUrl: 'https://example.com/puja-kit', alt: 'Puja Kit' },
-        { id: 'ad-2', mediaUrl: '/placeholder.svg', targetUrl: 'https://example.com/books', alt: 'Jain Books' },
-        { id: 'ad-3', mediaUrl: '/placeholder.svg', targetUrl: 'https://example.com/retreat', alt: 'Spiritual Retreat' }
-      ]} />
 
       {/* Check-in Modal */}
       <CheckInModal

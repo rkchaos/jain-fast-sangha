@@ -1,4 +1,4 @@
-import { Home, Calendar, Trophy, Users, Settings } from "lucide-react";
+import { Home, Calendar, Trophy, Users, Settings, BookOpen, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavigationProps {
@@ -9,8 +9,9 @@ interface NavigationProps {
 const navItems = [
   { id: "home", icon: Home, label: "Today" },
   { id: "calendar", icon: Calendar, label: "Calendar" },
-  { id: "leaderboard", icon: Trophy, label: "Leaderboard" },
-  { id: "community", icon: Users, label: "Sangha" },
+  { id: "sangha", icon: Users, label: "Sangha" },
+  { id: "blogs", icon: BookOpen, label: "Blogs" },
+  { id: "community", icon: Award, label: "News" },
   { id: "settings", icon: Settings, label: "Settings" },
 ];
 
