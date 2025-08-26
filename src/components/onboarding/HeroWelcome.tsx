@@ -5,16 +5,16 @@ interface HeroWelcomeProps {
   imageSrc?: string;
   headline?: string;
   subText?: string;
-  ctaText?: string;
-  onCtaClick?: () => void;
+  onSignup?: () => void;
+  onLogin?: () => void;
 }
 
 export const HeroWelcome: React.FC<HeroWelcomeProps> = ({
   imageSrc = "/placeholder.svg",
   headline = "Jai Jinendra — Welcome to your Sangha",
   subText = "A simple place to track your fasting, join your sangha and follow Paryushan.",
-  ctaText = "Begin",
-  onCtaClick
+  onSignup,
+  onLogin
 }) => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-dawn">
@@ -38,14 +38,25 @@ export const HeroWelcome: React.FC<HeroWelcomeProps> = ({
           {subText}
         </p>
 
-        {/* CTA Button */}
-        <Button 
-          size="xl" 
-          className="w-full rounded-full bg-gradient-sacred hover:shadow-floating transition-all duration-300" 
-          onClick={onCtaClick}
-        >
-          {ctaText}
-        </Button>
+        {/* CTA Buttons */}
+        <div className="space-y-3">
+          <Button 
+            size="xl" 
+            className="w-full rounded-full bg-gradient-sacred hover:shadow-floating transition-all duration-300" 
+            onClick={onSignup}
+          >
+            Create Account
+          </Button>
+          
+          <Button 
+            variant="outline"
+            size="xl" 
+            className="w-full rounded-full" 
+            onClick={onLogin}
+          >
+            Login
+          </Button>
+        </div>
       </div>
     </div>
   );

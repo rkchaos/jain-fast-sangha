@@ -3,5 +3,8 @@ project_id = "jakdsjslactlnullqtec"
 [functions.direct_signup]
 verify_jwt = false
 
+[functions.send_magic_link]
+verify_jwt = false
+
 [functions.export_vrat_csv]
 verify_jwt = true

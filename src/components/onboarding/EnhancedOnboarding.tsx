@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { HeroWelcome } from './HeroWelcome';
 import { SignupForm } from './SignupForm';
-
+import { LoginForm } from './LoginForm';
 import { SanghaSelector } from './SanghaSelector';
 import { toast } from 'sonner';
 
@@ -9,7 +9,7 @@ interface EnhancedOnboardingProps {
   onComplete: () => void;
 }
 
-type OnboardingStep = 'welcome' | 'signup' | 'sangha';
+type OnboardingStep = 'welcome' | 'signup' | 'login' | 'sangha';
 
 export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
@@ -20,7 +20,7 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
   }>({});
 
   const handleWelcome = () => {
-    setCurrentStep('signup');
+    // This function is no longer needed since we have separate handlers
   };
 
   const handleSignup = (data: { name: string; phone: string; email: string }) => {
@@ -41,13 +41,26 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
 
   switch (currentStep) {
     case 'welcome':
-      return <HeroWelcome onCtaClick={handleWelcome} />;
+      return (
+        <HeroWelcome 
+          onSignup={() => setCurrentStep('signup')}
+          onLogin={() => setCurrentStep('login')}
+        />
+      );
     
     case 'signup':
       return (
         <SignupForm 
           onSignup={handleSignup}
           onBack={() => setCurrentStep('welcome')}
+        />
+      );
+
+    case 'login':
+      return (
+        <LoginForm
+          onBack={() => setCurrentStep('welcome')}
+          onSwitchToSignup={() => setCurrentStep('signup')}
         />
       );
     
@@ -61,6 +74,11 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
       );
     
     default:
-      return <HeroWelcome onCtaClick={handleWelcome} />;
+      return (
+        <HeroWelcome 
+          onSignup={() => setCurrentStep('signup')}
+          onLogin={() => setCurrentStep('login')}
+        />
+      );
   }
 };
