@@ -3,7 +3,7 @@ import { HeroWelcome } from './HeroWelcome';
 import { SignupForm } from './SignupForm';
 import { OtpVerify } from './OtpVerify';
 import { SanghaSelector } from './SanghaSelector';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 interface EnhancedOnboardingProps {
   onComplete: () => void;
@@ -26,43 +26,29 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
   const handleSignup = (data: { name: string; phone: string; email?: string }) => {
     setUserData(data);
     setCurrentStep('otp');
-    toast({
-      title: "OTP Sent",
-      description: `Verification code sent to +91 ${data.phone}`,
-    });
+    toast.success(`OTP sent to +91 ${data.phone}`);
   };
 
-  const handleOtpVerify = (otp: string) => {
-    // Simulate OTP verification
-    if (otp.length >= 4) {
+  const handleOtpVerify = (success: boolean) => {
+    if (success) {
       setCurrentStep('sangha');
-      toast({
-        title: "Phone Verified ✓",
-        description: "Now let's find your Sangha community",
-      });
+      toast.success("Phone verified! Now let's find your Sangha community");
+    } else {
+      toast.error('Verification failed. Please try again.');
     }
   };
 
   const handleOtpResend = () => {
-    toast({
-      title: "OTP Resent",
-      description: "New verification code sent to your phone",
-    });
+    toast.success('New OTP sent to your phone');
   };
 
   const handleJoinSangha = (sanghaId: string) => {
-    toast({
-      title: "Welcome to Jain Sangha! 🙏",
-      description: "You're all set to begin your spiritual journey",
-    });
+    toast.success("Welcome to Jain Sangha! 🙏 You're all set to begin your spiritual journey");
     setTimeout(onComplete, 1500);
   };
 
   const handleCreateSangha = (sangha: { name: string; privacy: 'public' | 'private'; description?: string }) => {
-    toast({
-      title: `${sangha.name} Created! 🎉`,
-      description: "Your new Sangha is ready. Invite others to join!",
-    });
+    toast.success(`${sangha.name} created! 🎉 Your new Sangha is ready. Invite others to join!`);
     setTimeout(onComplete, 1500);
   };
 
@@ -82,6 +68,8 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
       return (
         <OtpVerify
           phone={userData.phone || ''}
+          name={userData.name || ''}
+          email={userData.email}
           onVerify={handleOtpVerify}
           onResend={handleOtpResend}
         />

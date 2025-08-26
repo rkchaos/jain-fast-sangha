@@ -2,18 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface OtpVerifyProps {
   phone: string;
-  onVerify: (otp: string) => void;
+  name: string;
+  email?: string;
+  onVerify: (success: boolean) => void;
   onResend: () => void;
 }
 
-export const OtpVerify: React.FC<OtpVerifyProps> = ({ phone, onVerify, onResend }) => {
+export const OtpVerify: React.FC<OtpVerifyProps> = ({ phone, name, email, onVerify, onResend }) => {
   const [otp, setOtp] = useState('');
   const [resendCooldown, setResendCooldown] = useState(30);
   const [isResendDisabled, setIsResendDisabled] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -29,15 +33,28 @@ export const OtpVerify: React.FC<OtpVerifyProps> = ({ phone, onVerify, onResend 
     return () => clearInterval(timer);
   }, []);
 
-  const handleVerify = () => {
-    if (otp.length >= 4) {
-      onVerify(otp);
-    } else {
-      toast({
-        title: "Invalid OTP",
-        description: "Please enter a valid OTP",
-        variant: "destructive"
+  const handleVerify = async () => {
+    if (otp.length < 6) {
+      toast.error('Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify_otp', {
+        body: { phone, otp_code: otp, name, email }
       });
+
+      if (error) throw error;
+
+      toast.success('Phone verified successfully!');
+      onVerify(true);
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+      toast.error('Invalid or expired OTP. Please try again.');
+      onVerify(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,10 +64,7 @@ export const OtpVerify: React.FC<OtpVerifyProps> = ({ phone, onVerify, onResend 
       setResendCooldown(30);
       setIsResendDisabled(true);
       setOtp('');
-      toast({
-        title: "OTP Sent",
-        description: "A new OTP has been sent to your phone"
-      });
+      toast.success('A new OTP has been sent to your phone');
     }
   };
 
@@ -91,9 +105,9 @@ export const OtpVerify: React.FC<OtpVerifyProps> = ({ phone, onVerify, onResend 
               onClick={handleVerify} 
               className="w-full" 
               size="lg"
-              disabled={otp.length < 4}
+              disabled={otp.length < 6 || loading}
             >
-              Verify
+              {loading ? 'Verifying...' : 'Verify'}
             </Button>
             
             <div className="text-center">

@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface SignupFormProps {
   onSendOtp: (data: { name: string; phone: string; email?: string }) => void;
@@ -39,14 +40,29 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSendOtp, onBack }) => 
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
+    
+    if (!validateForm()) return;
+    
+    const cleanedPhone = formData.phone.replace(/\D/g, '');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('send_otp', {
+        body: { phone: cleanedPhone }
+      });
+
+      if (error) throw error;
+
+      toast.success('OTP sent successfully!');
       onSendOtp({
         name: formData.name.trim(),
-        phone: formData.phone.replace(/\D/g, ''),
+        phone: cleanedPhone,
         email: formData.email.trim() || undefined
       });
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      toast.error('Failed to send OTP. Please try again.');
     }
   };
 

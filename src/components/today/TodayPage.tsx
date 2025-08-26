@@ -10,10 +10,12 @@ import { StreakDiagram } from './StreakDiagram';
 import { CheckInModal } from './CheckInModal';
 import { Leaderboard } from './Leaderboard';
 import { AdCarousel } from './AdCarousel';
-import { InterstitialAd } from './InterstitialAd';
 import { PastEntryModal } from '../calendar/PastEntryModal';
-import { toast } from '@/components/ui/use-toast';
 import { CalendarIcon } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useVratRecords } from '@/hooks/useVratRecords';
+import { VratType, VratStatus } from '@/types/database';
+import { toast } from 'sonner';
 
 // Festival content based on copy tokens
 const festivalMessages = [
@@ -33,54 +35,71 @@ interface CheckInData {
 }
 
 export const TodayPage: React.FC = () => {
-  const [checkedIn, setCheckedIn] = useState(false);
-  const [currentCheckIn, setCurrentCheckIn] = useState<CheckInData | null>(null);
+  const { user } = useAuth();
+  const { todayRecord, streak, createVratRecord, updateVratRecord, loading } = useVratRecords();
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [showPastEntryModal, setShowPastEntryModal] = useState(false);
   const [isPastDate, setIsPastDate] = useState(false);
   const [selectedPastDate, setSelectedPastDate] = useState<Date | undefined>();
-  const [streak, setStreak] = useState(7);
 
-  const handleCheckIn = (data: { type: string; note?: string }) => {
-    const checkInData: CheckInData = {
-      ...data,
-      timestamp: new Date()
-    };
-    
-    setCurrentCheckIn(checkInData);
-    setCheckedIn(true);
-    
-    toast({
-      title: "Vrat Started! 🙏",
-      description: `Your ${data.type} vrat has begun. Stay mindful and strong.`,
-    });
-  };
+  const isCheckedIn = todayRecord && !['success', 'tried', 'fail'].includes(todayRecord.status);
+  const hasCompletedToday = todayRecord && ['success', 'tried', 'fail'].includes(todayRecord.status);
 
-  const handleCheckOut = (completed: boolean = true) => {
-    if (currentCheckIn) {
-      setCheckedIn(false);
-      if (completed) {
-        setStreak(prev => prev + 1);
-      }
-      setCurrentCheckIn(null);
+  const handleCheckIn = async (data: { type: string; note?: string }) => {
+    try {
+      await createVratRecord(
+        data.type as VratType,
+        'success', // Start as in-progress, will be updated on completion
+        data.note
+      );
       
-      toast({
-        title: completed ? "Vrat Completed! ✨" : "Progress Recorded",
-        description: completed 
-          ? `Congratulations! Your ${currentCheckIn.type} vrat is complete. Your streak is now ${streak + (completed ? 1 : 0)} days.`
-          : "Wasn't able to complete but I am proud of myself for trying. Every effort counts on this spiritual journey.",
-      });
+      toast.success(`${data.type} vrat started! 🙏 Stay mindful and strong.`);
+    } catch (error) {
+      toast.error('Failed to start vrat. Please try again.');
     }
   };
 
-  const handlePastEntry = (data: { type: string; completed: boolean }) => {
-    if (selectedPastDate) {
-      toast({
-        title: data.completed ? "Past Entry Saved! ✨" : "Past Entry Recorded",
-        description: data.completed 
-          ? `Your ${data.type} vrat on ${selectedPastDate.toLocaleDateString()} has been marked as completed.`
-          : `Your ${data.type} attempt on ${selectedPastDate.toLocaleDateString()} has been recorded. Every effort counts!`
-      });
+  const handleCheckOut = async (completed: boolean = true) => {
+    if (!todayRecord) return;
+
+    try {
+      const status: VratStatus = completed ? 'success' : 'tried';
+      await updateVratRecord(todayRecord.id, status);
+      
+      toast.success(
+        completed 
+          ? `Vrat completed! ✨ Your streak is now ${streak + 1} days.`
+          : "Progress recorded. Every effort counts on this spiritual journey."
+      );
+    } catch (error) {
+      toast.error('Failed to update vrat. Please try again.');
+    }
+  };
+
+  const handlePastEntry = async (data: { type: string; completed: boolean }) => {
+    if (!selectedPastDate) return;
+
+    try {
+      const status: VratStatus = data.completed ? 'success' : 'tried';
+      await createVratRecord(
+        data.type as VratType,
+        status,
+        undefined,
+        selectedPastDate.toISOString().split('T')[0],
+        true
+      );
+
+      toast.success(
+        data.completed 
+          ? `Past ${data.type} vrat recorded as completed! ✨`
+          : `Past ${data.type} attempt recorded. Every effort counts!`
+      );
+      
+      setShowPastEntryModal(false);
+      setSelectedPastDate(undefined);
+      setIsPastDate(false);
+    } catch (error) {
+      toast.error('Failed to record past entry. Please try again.');
     }
   };
 
@@ -93,11 +112,7 @@ export const TodayPage: React.FC = () => {
   };
 
   const handleViewHistory = () => {
-    // Navigate to retrospective/history view
-    toast({
-      title: "Coming Soon",
-      description: "History view will be available soon",
-    });
+    toast.success('Check your Calendar tab for detailed history');
   };
 
   return (
@@ -122,7 +137,7 @@ export const TodayPage: React.FC = () => {
 
       {/* Check-in Section */}
       <div className="space-y-4">
-        {!checkedIn ? (
+        {!isCheckedIn && !hasCompletedToday ? (
           <div className="space-y-3">
             {/* Past Date Option */}
             <div className="flex items-center space-x-3 p-3 bg-accent/20 rounded-lg">
@@ -175,17 +190,17 @@ export const TodayPage: React.FC = () => {
           <div className="space-y-3">
             <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center">
               <h3 className="font-semibold text-primary mb-1">
-                {currentCheckIn?.type} Vrat in Progress
+                {todayRecord?.vrat_type} Vrat in Progress
               </h3>
               <p className="text-sm text-muted-foreground">
-                Started at {currentCheckIn?.timestamp.toLocaleTimeString('en-IN', { 
+                Started at {new Date(todayRecord?.created_at || '').toLocaleTimeString('en-IN', { 
                   hour: '2-digit', 
                   minute: '2-digit' 
                 })}
               </p>
-              {currentCheckIn?.note && (
+              {todayRecord?.note && (
                 <p className="text-sm text-foreground mt-2 italic">
-                  "{currentCheckIn.note}"
+                  "{todayRecord.note}"
                 </p>
               )}
             </div>
@@ -235,18 +250,6 @@ export const TodayPage: React.FC = () => {
           selectedDate={selectedPastDate}
         />
       )}
-
-      {/* Interstitial Ad */}
-      <InterstitialAd
-        ad={{
-          id: 'interstitial-1',
-          mediaUrl: '/placeholder.svg',
-          targetUrl: 'https://example.com/special-offer',
-          alt: 'Special Spiritual Retreat Offer'
-        }}
-        frequencyMins={10} // Show every 10 minutes for demo
-        enabled={true}
-      />
     </div>
   );
 };
