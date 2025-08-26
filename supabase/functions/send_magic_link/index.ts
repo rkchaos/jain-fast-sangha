@@ -40,10 +40,12 @@ serve(async (req) => {
     }
 
     // Send magic link
+    const redirectUrl = req.headers.get('origin') || req.headers.get('referer') || 'https://f0b60ec9-eade-480a-a80b-389f8ada8e30.sandbox.lovable.dev';
+    
     const { data, error } = await supabase.auth.signInWithOtp({
       email: email,
       options: {
-        emailRedirectTo: `${req.headers.get('origin') || 'http://localhost:3000'}/`,
+        emailRedirectTo: `${redirectUrl}/`,
       }
     });
 
