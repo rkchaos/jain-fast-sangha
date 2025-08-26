@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Medal, Award, Crown } from 'lucide-react';
+import { Trophy, Medal, Award, Crown, Users } from 'lucide-react';
 
 interface LeaderboardUser {
   id: string;
@@ -17,6 +18,15 @@ interface LeaderboardProps {
   filter?: 'global' | 'sangha' | 'friends';
   currentUserId?: string;
 }
+
+// Mock sangha data
+const mockSanghas = [
+  { id: 'all', name: 'All Groups' },
+  { id: 'mumbai-central', name: 'Mumbai Central Sangha' },
+  { id: 'delhi-north', name: 'Delhi North Community' },
+  { id: 'bangalore-south', name: 'Bangalore South Group' },
+  { id: 'ahmedabad-west', name: 'Ahmedabad West Sangha' }
+];
 
 // Mock leaderboard data
 const mockLeaderboards = {
@@ -53,6 +63,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   currentUserId = 'current'
 }) => {
   const [activeFilter, setActiveFilter] = useState(filter);
+  const [selectedSangha, setSelectedSangha] = useState('all');
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -129,10 +140,27 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-primary" />
-          Leaderboard
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary" />
+            Leaderboard
+          </CardTitle>
+          {activeFilter === 'sangha' && (
+            <Select value={selectedSangha} onValueChange={setSelectedSangha}>
+              <SelectTrigger className="w-[180px]">
+                <Users className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {mockSanghas.map((sangha) => (
+                  <SelectItem key={sangha.id} value={sangha.id}>
+                    {sangha.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as any)}>

@@ -53,9 +53,9 @@ const newsArticles: NewsArticle[] = [
     id: "1",
     title: "Das Lakshan Parv Celebrations Begin Across India",
     content: "The sacred ten-day festival of Das Lakshan Parv has commenced with grand celebrations in Jain temples nationwide. Devotees are observing enhanced spiritual practices...",
-    author: "Jain Times Editorial",
+    author: "Jain Uwas Team",
     date: "2 hours ago",
-    category: "news",
+    category: "announcement",
     location: "Pan India",
     likes: 156,
     comments: 23,
@@ -66,7 +66,7 @@ const newsArticles: NewsArticle[] = [
     id: "2",
     title: "New Jain Meditation Center Opens in Bangalore",
     content: "A state-of-the-art meditation and spiritual learning center has been inaugurated in Bangalore, featuring modern amenities while preserving traditional values...",
-    author: "Community Updates",
+    author: "Jain Uwas Team",
     date: "5 hours ago", 
     category: "announcement",
     location: "Bangalore",
@@ -79,13 +79,25 @@ const newsArticles: NewsArticle[] = [
     id: "3",
     title: "Acharya Shri's Teachings on Mindful Living",
     content: "In his recent discourse, Acharya Shri emphasized the importance of integrating ancient Jain principles with modern lifestyle challenges...",
-    author: "Spiritual Digest",
+    author: "Jain Uwas Team",
     date: "1 day ago",
     category: "spiritual",
     likes: 234,
     comments: 45,
     isLiked: true,
     tags: ["Spiritual", "Teaching", "Mindfulness"]
+  },
+  {
+    id: "4",
+    title: "App Update: New Features for Better Spiritual Tracking",
+    content: "We're excited to announce new features in the Jain Sangha app including enhanced calendar tracking, community blogs, and improved meditation timers...",
+    author: "Jain Uwas Team",
+    date: "3 days ago",
+    category: "announcement",
+    likes: 145,
+    comments: 28,
+    isLiked: false,
+    tags: ["App Update", "Features", "Technology"]
   }
 ];
 
@@ -196,17 +208,12 @@ export function CommunityNewsScreen() {
         </Button>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="news">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="news">News & Updates</TabsTrigger>
-          <TabsTrigger value="causes">Sacred Causes</TabsTrigger>
-        </TabsList>
+      {/* News & Updates - No Sacred Causes */}
+      <div className="space-y-4">
 
-        <TabsContent value="news" className="space-y-4">
-          {/* Featured News */}
-          <div className="space-y-4">
-            {newsArticles.map((article) => (
+        {/* Announcements & Updates */}
+        <div className="space-y-4">
+          {newsArticles.map((article) => (
               <Card key={article.id} className="shadow-gentle">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -277,119 +284,11 @@ export function CommunityNewsScreen() {
             ))}
           </div>
 
-          {/* Load More */}
-          <Button variant="outline" className="w-full">
-            Load More Articles
-          </Button>
-        </TabsContent>
-
-        <TabsContent value="causes" className="space-y-4">
-          {/* Campaign Stats */}
-          <Card className="shadow-gentle">
-            <CardContent className="p-4">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-2xl font-bold text-primary">₹12.5M</p>
-                  <p className="text-xs text-muted-foreground">Total Raised</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-jade">45</p>
-                  <p className="text-xs text-muted-foreground">Active Campaigns</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-secondary">2,847</p>
-                  <p className="text-xs text-muted-foreground">Donors This Month</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Active Campaigns */}
-          <div className="space-y-4">
-            {campaigns.map((campaign) => (
-              <Card key={campaign.id} className="shadow-gentle">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Badge className={getCampaignCategoryColor(campaign.category)}>
-                          {campaign.category}
-                        </Badge>
-                        {campaign.isVerified && (
-                          <Badge variant="outline" className="text-green-600 border-green-600">
-                            Verified
-                          </Badge>
-                        )}
-                      </div>
-                      <CardTitle className="text-lg">{campaign.title}</CardTitle>
-                      <CardDescription className="mt-2">
-                        {campaign.description}
-                      </CardDescription>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        by {campaign.organizationName}
-                      </p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Progress */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">
-                        {formatAmount(campaign.currentAmount)} raised
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        of {formatAmount(campaign.targetAmount)}
-                      </span>
-                    </div>
-                    <Progress 
-                      value={(campaign.currentAmount / campaign.targetAmount) * 100} 
-                      className="h-2"
-                    />
-                    <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-                      <span>{Math.round((campaign.currentAmount / campaign.targetAmount) * 100)}% complete</span>
-                      <span>{campaign.daysLeft} days left</span>
-                    </div>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-1">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      <span>{campaign.donorCount} donors</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                      <span>
-                        {Math.round((campaign.currentAmount / campaign.targetAmount) * 100)}% funded
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex space-x-2">
-                    <Button variant="sacred" className="flex-1">
-                      <Heart className="w-4 h-4 mr-2" />
-                      Donate Now
-                    </Button>
-                    <Button variant="outline">
-                      <Share2 className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline">
-                      <ExternalLink className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* View All Campaigns */}
-          <Button variant="outline" className="w-full">
-            View All Active Campaigns
-          </Button>
-        </TabsContent>
-      </Tabs>
+        {/* Load More */}
+        <Button variant="outline" className="w-full">
+          Load More Updates
+        </Button>
+      </div>
     </div>
   );
 }

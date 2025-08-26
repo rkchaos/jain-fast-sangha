@@ -167,14 +167,36 @@ export const CalendarPage: React.FC = () => {
                 {getEventsForDate(selectedDate).length > 0 ? (
                   <div className="space-y-2">
                     {getEventsForDate(selectedDate).map((event, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-accent/20 rounded-lg">
+                      <div key={index} className="flex items-center justify-between p-3 bg-accent/20 rounded-lg group">
                         <div>
                           <h4 className="font-medium">{event.title}</h4>
                           <p className="text-sm text-muted-foreground capitalize">{event.type}</p>
                         </div>
-                        <Badge className={getEventTypeColor(event.type, event.completed)}>
-                          {event.completed ? 'Completed' : event.type === 'festival' ? 'Festival' : 'Pending'}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={getEventTypeColor(event.type, event.completed)}>
+                            {event.completed ? 'Completed' : event.type === 'festival' ? 'Festival' : 'Pending'}
+                          </Badge>
+                          {event.type === 'vrat' && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700"
+                              onClick={() => {
+                                const updatedEvents = events.filter((e, i) => 
+                                  !(e.date.toDateString() === selectedDate.toDateString() && 
+                                    events.findIndex(event => event.date.toDateString() === selectedDate.toDateString() && event === e) === index)
+                                );
+                                setEvents(updatedEvents);
+                                toast({
+                                  title: "Entry Removed",
+                                  description: "The vrat entry has been deleted."
+                                });
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
