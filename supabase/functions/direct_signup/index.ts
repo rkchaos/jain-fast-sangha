@@ -30,7 +30,7 @@ serve(async (req) => {
       .from('profiles')
       .select('*')
       .eq('phone', phone)
-      .single();
+      .maybeSingle();
 
     if (existingProfile) {
       return new Response(
@@ -46,8 +46,24 @@ serve(async (req) => {
       email_confirm: true, // Auto-confirm email
     });
 
-    if (authError || !authUser.user) {
+    if (authError) {
       console.error("Error creating auth user:", authError);
+      
+      // Handle specific auth errors
+      if (authError.message?.includes("already been registered") || authError.code === "email_exists") {
+        return new Response(
+          JSON.stringify({ error: "An account with this email already exists" }),
+          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ error: `Failed to create account: ${authError.message}` }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!authUser.user) {
       return new Response(
         JSON.stringify({ error: "Failed to create user account" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
