@@ -15,6 +15,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+
+  // Cooldown timer
+  React.useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
 
   const validateEmail = (email: string) => {
     return /\S+@\S+\.\S+/.test(email);
@@ -22,6 +31,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (cooldown > 0) {
+      setError(`Please wait ${cooldown} seconds before requesting another link`);
+      return;
+    }
     
     if (!email.trim()) {
       setError('Email is required');
@@ -44,10 +58,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
       if (error) throw error;
 
       toast.success('Login link sent! Check your email to continue.');
+      setCooldown(60); // Set 60 second cooldown
     } catch (error: any) {
       console.error('Error sending magic link:', error);
       if (error.message?.includes('No account found')) {
         setError('No account found with this email. Please sign up first.');
+      } else if (error.message?.includes('Too many requests')) {
+        setError('Too many requests. Please wait before trying again.');
+        setCooldown(60);
       } else {
         setError('Failed to send login link. Please try again.');
       }
@@ -82,8 +100,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
             </div>
 
             <div className="space-y-3 pt-4">
-              <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                {loading ? 'Sending...' : 'Send Login Link'}
+              <Button 
+                type="submit" 
+                className="w-full" 
+                size="lg" 
+                disabled={loading || cooldown > 0}
+              >
+                {loading ? 'Sending...' : cooldown > 0 ? `Wait ${cooldown}s` : 'Send Login Link'}
               </Button>
               
               <div className="text-center space-y-2">

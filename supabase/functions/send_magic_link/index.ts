@@ -49,8 +49,17 @@ serve(async (req) => {
 
     if (error) {
       console.error("Error sending magic link:", error);
+      
+      // Handle specific auth errors
+      if (error.code === "over_email_send_rate_limit") {
+        return new Response(
+          JSON.stringify({ error: "Too many requests. Please wait before requesting another login link." }),
+          { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      
       return new Response(
-        JSON.stringify({ error: "Failed to send login link" }),
+        JSON.stringify({ error: "Failed to send login link. Please try again later." }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
