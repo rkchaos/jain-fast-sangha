@@ -14,7 +14,798 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ad_clicks: {
+        Row: {
+          ad_id: string
+          clicked_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          ad_id: string
+          clicked_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          ad_id?: string
+          clicked_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_clicks_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_clicks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ads: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string | null
+          redirect_url: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          redirect_url?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          redirect_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      blog_comments: {
+        Row: {
+          blog_id: string
+          content: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          blog_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          blog_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_comments_blog_id_fkey"
+            columns: ["blog_id"]
+            isOneToOne: false
+            referencedRelation: "blogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_likes: {
+        Row: {
+          blog_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          blog_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          blog_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_likes_blog_id_fkey"
+            columns: ["blog_id"]
+            isOneToOne: false
+            referencedRelation: "blogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blogs: {
+        Row: {
+          category: Database["public"]["Enums"]["blog_category"] | null
+          content: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          user_id: string
+          youtube_url: string | null
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["blog_category"] | null
+          content: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+          youtube_url?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["blog_category"] | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          youtube_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blogs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar: {
+        Row: {
+          date: string
+          id: string
+          user_id: string
+          vrat_id: string
+        }
+        Insert: {
+          date: string
+          id?: string
+          user_id: string
+          vrat_id: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          user_id?: string
+          vrat_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_vrat_id_fkey"
+            columns: ["vrat_id"]
+            isOneToOne: false
+            referencedRelation: "vrat_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          sangha_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          sangha_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          sangha_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_sangha_id_fkey"
+            columns: ["sangha_id"]
+            isOneToOne: false
+            referencedRelation: "sanghas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          date_time: string
+          description: string | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          id: string
+          sangha_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          date_time: string
+          description?: string | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          id?: string
+          sangha_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          date_time?: string
+          description?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          sangha_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_sangha_id_fkey"
+            columns: ["sangha_id"]
+            isOneToOne: false
+            referencedRelation: "sanghas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          created_at: string | null
+          id: string
+          target_vrats: number
+          timeframe: Database["public"]["Enums"]["goal_timeframe"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          target_vrats: number
+          timeframe: Database["public"]["Enums"]["goal_timeframe"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          target_vrats?: number
+          timeframe?: Database["public"]["Enums"]["goal_timeframe"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memberships: {
+        Row: {
+          id: string
+          joined_at: string | null
+          role: Database["public"]["Enums"]["membership_role"] | null
+          sangha_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          role?: Database["public"]["Enums"]["membership_role"] | null
+          sangha_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          role?: Database["public"]["Enums"]["membership_role"] | null
+          sangha_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memberships_sangha_id_fkey"
+            columns: ["sangha_id"]
+            isOneToOne: false
+            referencedRelation: "sanghas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news: {
+        Row: {
+          author: string
+          category: Database["public"]["Enums"]["news_category"] | null
+          content: string
+          created_at: string | null
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author: string
+          category?: Database["public"]["Enums"]["news_category"] | null
+          content: string
+          created_at?: string | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          category?: Database["public"]["Enums"]["news_category"] | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      news_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          news_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          news_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          news_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_comments_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          news_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          news_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          news_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_likes_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          created_at: string | null
+          id: string
+          note: string
+          user_id: string
+          vrat_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          note: string
+          user_id: string
+          vrat_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          note?: string
+          user_id?: string
+          vrat_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_vrat_id_fkey"
+            columns: ["vrat_id"]
+            isOneToOne: false
+            referencedRelation: "vrat_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          time: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          time?: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          time?: string | null
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      otp: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          otp_code: string
+          phone: string
+          used: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          otp_code: string
+          phone: string
+          used?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          phone?: string
+          used?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "otp_phone_fkey"
+            columns: ["phone"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["phone"]
+          },
+        ]
+      }
+      profile_updates: {
+        Row: {
+          field_changed: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          field_changed: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          field_changed?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_updates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          otp_verified: boolean | null
+          phone: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id: string
+          name: string
+          otp_verified?: boolean | null
+          phone: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          otp_verified?: boolean | null
+          phone?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      rsvp: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: string
+          status: Database["public"]["Enums"]["rsvp_status"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: string
+          status: Database["public"]["Enums"]["rsvp_status"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          status?: Database["public"]["Enums"]["rsvp_status"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rsvp_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rsvp_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sanghas: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          parent_sangha_id: string | null
+          privacy: Database["public"]["Enums"]["sangha_privacy"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          parent_sangha_id?: string | null
+          privacy?: Database["public"]["Enums"]["sangha_privacy"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          parent_sangha_id?: string | null
+          privacy?: Database["public"]["Enums"]["sangha_privacy"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sanghas_parent_sangha_id_fkey"
+            columns: ["parent_sangha_id"]
+            isOneToOne: false
+            referencedRelation: "sanghas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vrat_records: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          is_retrospective: boolean | null
+          note: string | null
+          sangha_id: string | null
+          status: Database["public"]["Enums"]["vrat_status"]
+          user_id: string
+          vrat_type: Database["public"]["Enums"]["vrat_type"]
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          is_retrospective?: boolean | null
+          note?: string | null
+          sangha_id?: string | null
+          status: Database["public"]["Enums"]["vrat_status"]
+          user_id: string
+          vrat_type: Database["public"]["Enums"]["vrat_type"]
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          is_retrospective?: boolean | null
+          note?: string | null
+          sangha_id?: string | null
+          status?: Database["public"]["Enums"]["vrat_status"]
+          user_id?: string
+          vrat_type?: Database["public"]["Enums"]["vrat_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vrat_records_sangha_id_fkey"
+            columns: ["sangha_id"]
+            isOneToOne: false
+            referencedRelation: "sanghas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vrat_records_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +814,20 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      blog_category: "spiritual" | "community" | "teachings" | "personal"
+      event_type: "fasting" | "talent_show" | "spiritual" | "community"
+      goal_timeframe: "30d" | "90d" | "365d"
+      membership_role: "member" | "admin"
+      news_category: "news" | "announcement" | "spiritual"
+      notification_type:
+        | "daily_prompt"
+        | "festival_alert"
+        | "tithi"
+        | "community_update"
+      rsvp_status: "going" | "not_going" | "interested"
+      sangha_privacy: "public" | "private"
+      vrat_status: "success" | "tried" | "fail"
+      vrat_type: "upvas" | "ekasna" | "ayambil" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +954,22 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      blog_category: ["spiritual", "community", "teachings", "personal"],
+      event_type: ["fasting", "talent_show", "spiritual", "community"],
+      goal_timeframe: ["30d", "90d", "365d"],
+      membership_role: ["member", "admin"],
+      news_category: ["news", "announcement", "spiritual"],
+      notification_type: [
+        "daily_prompt",
+        "festival_alert",
+        "tithi",
+        "community_update",
+      ],
+      rsvp_status: ["going", "not_going", "interested"],
+      sangha_privacy: ["public", "private"],
+      vrat_status: ["success", "tried", "fail"],
+      vrat_type: ["upvas", "ekasna", "ayambil", "other"],
+    },
   },
 } as const
