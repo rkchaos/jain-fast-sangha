@@ -2,11 +2,8 @@ import { useState } from "react";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { EnhancedOnboarding } from "@/components/onboarding/EnhancedOnboarding";
 import { TodayPage } from "@/components/today/TodayPage";
-import { CalendarPage } from "@/components/calendar/CalendarPage";
 import { SanghaHubScreen } from "@/components/screens/SanghaHubScreen";
-import { CommunityNewsScreen } from "@/components/screens/CommunityNewsScreen";
-import { MonkNetworkScreen } from "@/components/screens/MonkNetworkScreen";
-import { BlogScreen } from "@/components/screens/BlogScreen";
+import { LeaderboardScreen } from "@/components/screens/LeaderboardScreen";
 import { SettingsScreen } from "@/components/screens/SettingsScreen";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -29,16 +26,10 @@ const Index = () => {
     switch (activeTab) {
       case "home":
         return <TodayPage />;
-      case "calendar":
-        return <CalendarPage />;
+      case "leaderboard":
+        return <LeaderboardScreen />;
       case "sangha":
         return <SanghaHubScreen />;
-      case "blogs":
-        return <BlogScreen />;
-      case "community":
-        return <CommunityNewsScreen />;
-      case "spiritual":
-        return <MonkNetworkScreen />;
       case "settings":
         return <SettingsScreen />;
       default:

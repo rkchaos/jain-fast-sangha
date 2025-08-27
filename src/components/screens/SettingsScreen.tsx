@@ -16,8 +16,12 @@ import {
   Moon,
   Sun
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 export function SettingsScreen() {
+  const { signOut, profile } = useAuth();
+  const { toast } = useToast();
   const [notifications, setNotifications] = useState({
     dailyPrompts: true,
     festivalAlerts: true,
@@ -26,14 +30,37 @@ export function SettingsScreen() {
   });
 
   const userProfile = {
-    name: "Your Name",
-    email: "your.email@example.com",
+    name: profile?.name || "Your Name",
+    email: profile?.email || "your.email@example.com",
     sanghas: ["Mumbai Jain Centre", "Delhi Jain Community"],
     joinDate: "January 2024"
   };
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been logged out of your account."
+      });
+    } catch (error) {
+      toast({
+        title: "Error signing out",
+        description: "Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleComingSoon = (feature: string) => {
+    toast({
+      title: "Coming Soon! 🚧",
+      description: `${feature} will be available in the next update.`
+    });
   };
 
   return (
@@ -87,7 +114,11 @@ export function SettingsScreen() {
               </div>
             </div>
             
-            <Button variant="outline" className="w-full">
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => handleComingSoon("Profile editing")}
+            >
               Edit Profile
             </Button>
           </CardContent>
@@ -175,7 +206,12 @@ export function SettingsScreen() {
             </div>
 
             <div className="pt-2">
-              <Button variant="outline" size="sm" className="w-full">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={() => handleComingSoon("Notification settings")}
+              >
                 Set Notification Time
               </Button>
             </div>
@@ -188,17 +224,29 @@ export function SettingsScreen() {
             <CardTitle>App Preferences</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full justify-start gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start gap-2"
+              onClick={() => handleComingSoon("App sharing")}
+            >
               <Share2 className="h-4 w-4" />
               Share App with Friends
             </Button>
             
-            <Button variant="outline" className="w-full justify-start gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start gap-2"
+              onClick={() => handleComingSoon("Sangha invitations")}
+            >
               <Users className="h-4 w-4" />
               Invite to Sangha
             </Button>
             
-            <Button variant="outline" className="w-full justify-start gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start gap-2"
+              onClick={() => handleComingSoon("Calendar sync")}
+            >
               <Calendar className="h-4 w-4" />
               Sync with Calendar
             </Button>
@@ -214,7 +262,12 @@ export function SettingsScreen() {
             <p className="text-sm text-muted-foreground mb-3">
               Help us show you relevant content from Jain businesses and community partners.
             </p>
-            <Button variant="outline" size="sm" className="w-full">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              onClick={() => handleComingSoon("Ad preferences")}
+            >
               Manage Ad Preferences
             </Button>
           </CardContent>
@@ -223,7 +276,11 @@ export function SettingsScreen() {
         {/* Account Actions */}
         <Card className="shadow-gentle">
           <CardContent className="pt-6 space-y-3">
-            <Button variant="destructive" className="w-full justify-start gap-2">
+            <Button 
+              variant="destructive" 
+              className="w-full justify-start gap-2"
+              onClick={handleSignOut}
+            >
               <LogOut className="h-4 w-4" />
               Sign Out
             </Button>
