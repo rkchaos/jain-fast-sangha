@@ -49,8 +49,14 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
       }
 
       if (data.error) {
-        if (data.error.includes('already exists')) {
-          toast.error('User already exists. Please try logging in instead.');
+        if (data.error.includes('already exists') || data.type === 'phone_exists' || data.type === 'email_exists') {
+          toast.error('Account already exists. Please try logging in instead.');
+          if (data.redirectToLogin) {
+            // Auto redirect to login after 2 seconds
+            setTimeout(() => {
+              window.location.hash = '#login';
+            }, 2000);
+          }
           return;
         }
         throw new Error(data.error);

@@ -25,16 +25,37 @@ serve(async (req) => {
       );
     }
 
-    // Check if user already exists by phone
-    const { data: existingProfile } = await supabase
+    // Check if user already exists by phone or email
+    const { data: existingProfileByPhone } = await supabase
       .from('profiles')
       .select('*')
       .eq('phone', phone)
       .maybeSingle();
 
-    if (existingProfile) {
+    if (existingProfileByPhone) {
       return new Response(
-        JSON.stringify({ error: "User with this phone number already exists" }),
+        JSON.stringify({ 
+          error: "User with this phone number already exists", 
+          type: "phone_exists",
+          redirectToLogin: true 
+        }),
+        { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { data: existingProfileByEmail } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existingProfileByEmail) {
+      return new Response(
+        JSON.stringify({ 
+          error: "User with this email already exists", 
+          type: "email_exists",
+          redirectToLogin: true 
+        }),
         { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -42,8 +63,12 @@ serve(async (req) => {
     // Create auth user with email
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email: email,
-      password: Math.random().toString(36), // Random password since we're not using it
+      password: 'temp_' + Math.random().toString(36), // Temporary password
       email_confirm: true, // Auto-confirm email
+      user_metadata: {
+        name: name,
+        phone: phone
+      }
     });
 
     if (authError) {

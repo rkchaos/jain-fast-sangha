@@ -49,15 +49,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
       }
 
       if (profileData) {
-        // Simple login - sign in with default password
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        // Send magic link for passwordless login
+        const { error: signInError } = await supabase.auth.signInWithOtp({
           email: profileData.email,
-          password: 'defaultpass123'
+          options: {
+            emailRedirectTo: `${window.location.origin}/`
+          }
         });
 
-        if (authError) throw authError;
+        if (signInError) throw signInError;
 
-        toast.success(`Welcome back, ${profileData.name}! 🙏`);
+        toast.success(`Magic link sent to ${profileData.email}! Check your email to sign in.`);
       }
     } catch (error: any) {
       console.error('Login error:', error);
