@@ -40,7 +40,7 @@ serve(async (req) => {
     }
 
     // Send magic link with explicit redirect URL
-    const baseUrl = 'https://f0b60ec9-eade-480a-a80b-389f8ada8e30.sandbox.lovable.dev';
+    const baseUrl = 'https://id-preview--f0b60ec9-eade-480a-a80b-389f8ada8e30.lovable.app';
     
     const { data, error } = await supabase.auth.signInWithOtp({
       email: email,

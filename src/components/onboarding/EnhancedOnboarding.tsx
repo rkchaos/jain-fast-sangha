@@ -31,12 +31,12 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
 
   const handleJoinSangha = (sanghaId: string) => {
     toast.success("Welcome to Jain Sangha! 🙏 You're all set to begin your spiritual journey");
-    setTimeout(onComplete, 1500);
+    onComplete();
   };
 
   const handleCreateSangha = (sangha: { name: string; privacy: 'public' | 'private'; description?: string }) => {
     toast.success(`${sangha.name} created! 🎉 Your new Sangha is ready. Invite others to join!`);
-    setTimeout(onComplete, 1500);
+    onComplete();
   };
 
   switch (currentStep) {
