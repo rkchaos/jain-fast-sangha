@@ -45,12 +45,8 @@ const Index = () => {
 
   if (!user) {
     return <EnhancedOnboarding onComplete={() => {
-      // Force immediate navigation to home
-      setActiveTab('home');
-      // Also trigger a window reload as fallback to ensure auth state updates
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      // Allow auth state to refresh naturally without forcing reload
+      console.log('Onboarding completed, waiting for auth state update...');
     }} />;
   }
 

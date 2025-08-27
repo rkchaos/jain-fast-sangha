@@ -71,11 +71,14 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack, userDa
         return;
       }
 
-      // Create auth user with password
+      // Create auth user with password and set email redirect
+      const redirectUrl = `${window.location.origin}/`;
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             name: formData.name,
             phone: formData.phone
@@ -92,12 +95,30 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack, userDa
       }
 
       if (authData.user) {
+        // If no session was created, attempt to sign in with password
+        if (!authData.session) {
+          console.log('No session created, attempting to sign in...');
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: formData.email,
+            password: formData.password
+          });
+          
+          if (signInError && signInError.message.includes('email not confirmed')) {
+            toast.info('Account created! Please check your email to confirm your account, then try logging in.', { duration: 8000 });
+            return;
+          } else if (signInError) {
+            console.error('Sign in error:', signInError);
+            toast.info('Account created! Please check your email to confirm your account.', { duration: 8000 });
+            return;
+          }
+        }
+        
         toast.success(`Welcome ${formData.name}! Account created successfully.`, { duration: 5000 });
         
-        // Wait a bit for the auth state to fully process
+        // Proceed to next step
         setTimeout(() => {
           onSignup(formData);
-        }, 1500);
+        }, 1000);
       }
     } catch (error: any) {
       console.error('Signup error:', error);

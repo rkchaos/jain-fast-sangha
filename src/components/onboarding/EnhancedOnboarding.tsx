@@ -34,10 +34,8 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
 
   const handleSanghaSelection = () => {
     toast.success("Welcome! 🙏 You're all set to begin your spiritual journey", { duration: 5000 });
-    // Force immediate completion and navigation
-    setTimeout(() => {
-      onComplete();
-    }, 100);
+    // Force navigation to complete the onboarding
+    onComplete();
   };
 
   const handleBackToSignup = () => {
