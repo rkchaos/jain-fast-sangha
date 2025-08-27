@@ -260,6 +260,63 @@ export const TodayPage: React.FC = () => {
                 Couldn't complete, but I tried
               </Button>
             </div>
+
+            {/* Past Date Option for adding more entries */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <Checkbox 
+                  id="past-date-additional"
+                  checked={isPastDate}
+                  onCheckedChange={(checked) => setIsPastDate(checked as boolean)}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="past-date-additional" className="cursor-pointer text-sm text-blue-800">
+                  📅 Add past vrat entry
+                </Label>
+              </div>
+
+              {isPastDate && (
+                <div className="mt-3 space-y-3">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedPastDate ? selectedPastDate.toLocaleDateString() : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedPastDate}
+                        onSelect={setSelectedPastDate}
+                        disabled={(date) => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const selectedDateTime = new Date(date);
+                          selectedDateTime.setHours(0, 0, 0, 0);
+                          
+                          const oneMonthAgo = new Date();
+                          oneMonthAgo.setMonth(today.getMonth() - 1);
+                          
+                          return selectedDateTime >= today || selectedDateTime < oneMonthAgo;
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowPastEntryModal(true)}
+                    disabled={!selectedPastDate}
+                  >
+                    Record Past Vrat
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         ) : null}
       </div>

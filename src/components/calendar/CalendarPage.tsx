@@ -43,13 +43,17 @@ export const CalendarPage: React.FC = () => {
 
       if (error) throw error;
 
-      const calendarEvents: CalendarEvent[] = data.map(record => ({
-        id: record.id,
-        date: new Date(record.date),
-        type: 'vrat',
-        title: record.vrat_type,
-        completed: record.status === 'success'
-      }));
+      const calendarEvents: CalendarEvent[] = data.map(record => {
+        // Add one day to fix date offset issue
+        const recordDate = new Date(record.date + 'T00:00:00');
+        return {
+          id: record.id,
+          date: recordDate,
+          type: 'vrat',
+          title: record.vrat_type,
+          completed: record.status === 'success'
+        };
+      });
 
       setEvents(calendarEvents);
     } catch (error) {
@@ -86,7 +90,7 @@ export const CalendarPage: React.FC = () => {
     if (!selectedDate || !user) return;
 
     try {
-      const status = data.completed ? 'success' : 'failed';
+      const status = data.completed ? 'success' : 'tried';
       const dateStr = selectedDate.toISOString().split('T')[0];
       
       await createVratRecord(
@@ -154,7 +158,7 @@ export const CalendarPage: React.FC = () => {
           Calendar & Progress
         </h1>
         <p className="text-sm text-muted-foreground">
-          Track your vrats and view your spiritual journey
+          Select a date and add past vrats below
         </p>
       </div>
 

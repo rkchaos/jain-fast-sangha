@@ -42,10 +42,11 @@ export const StreakDiagram: React.FC<StreakDiagramProps> = ({
       
       if (error) throw error;
       
+      const totalVrats = data.length;
       const completed = data.filter(record => record.status === 'success').length;
-      const percentage = days > 0 ? Math.round((completed / days) * 100) : 0;
+      const percentage = totalVrats > 0 ? Math.round((completed / totalVrats) * 100) : 0;
       
-      setUserData({ total: days, completed, percentage });
+      setUserData({ total: totalVrats, completed, percentage });
     } catch (error) {
       console.error('Error fetching user data:', error);
       setUserData({ total: days, completed: 0, percentage: 0 });
@@ -100,7 +101,7 @@ export const StreakDiagram: React.FC<StreakDiagramProps> = ({
             <span>
               {loading ? 'Loading...' : `Completed: ${userData.completed}`}
             </span>
-            <span>Goal: {userData.total}</span>
+            <span>Total Vrats: {userData.total}</span>
           </div>
           <Progress 
             value={userData.percentage} 
