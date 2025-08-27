@@ -94,16 +94,19 @@ export function SanghaLeaderboard({ userSanghas }: SanghaLeaderboardProps) {
     
     setLoading(true);
     try {
-      // Get sangha members with their profiles using proper join
+      // Get sangha members - try multiple approaches
+      console.log('Fetching members for sangha ID:', selectedSangha);
+      
       const { data: members, error: membersError } = await supabase
         .from('memberships')
         .select(`
           user_id,
-          profiles!memberships_user_id_fkey (id, name, email, phone)
+          profiles (id, name, email, phone)
         `)
         .eq('sangha_id', selectedSangha);
 
-      console.log('Fetched members for sangha:', selectedSangha, members);
+      console.log('Raw members data:', members);
+      console.log('Members error:', membersError);
 
       if (membersError) throw membersError;
 

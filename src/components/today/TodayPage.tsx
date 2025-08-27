@@ -48,7 +48,7 @@ export const TodayPage: React.FC = () => {
     try {
       await createVratRecord(
         data.type as VratType,
-        'success', // Start as in-progress, will be updated on completion
+        'success', // Start as success, will be updated later if needed
         data.note
       );
       
@@ -180,14 +180,13 @@ export const TodayPage: React.FC = () => {
                     onSelect={setSelectedPastDate}
                     disabled={(date) => {
                       const today = new Date();
-                      today.setHours(0, 0, 0, 0); // Reset time to compare only dates
+                      today.setHours(0, 0, 0, 0);
                       const selectedDateTime = new Date(date);
                       selectedDateTime.setHours(0, 0, 0, 0);
                       
                       const oneMonthAgo = new Date();
                       oneMonthAgo.setMonth(today.getMonth() - 1);
                       
-                      // Disable future dates and dates older than 1 month
                       return selectedDateTime >= today || selectedDateTime < oneMonthAgo;
                     }}
                     initialFocus
@@ -205,7 +204,26 @@ export const TodayPage: React.FC = () => {
               {isPastDate ? "Record Past Vrat" : "Check in"}
             </Button>
           </div>
-        ) : (
+        ) : hasCompletedToday ? (
+          <div className="space-y-3">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+              <h3 className="font-semibold text-green-800 mb-1">
+                🎉 {todayRecord?.vrat_type} Vrat Completed!
+              </h3>
+              <p className="text-sm text-green-600">
+                Completed at {new Date(todayRecord?.created_at || '').toLocaleTimeString('en-IN', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
+              </p>
+              {todayRecord?.note && (
+                <p className="text-sm text-green-700 mt-2 italic">
+                  "{todayRecord.note}"
+                </p>
+              )}
+            </div>
+          </div>
+        ) : isCheckedIn ? (
           <div className="space-y-3">
             <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center">
               <h3 className="font-semibold text-primary mb-1">
@@ -243,7 +261,7 @@ export const TodayPage: React.FC = () => {
               </Button>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Progress Section */}
