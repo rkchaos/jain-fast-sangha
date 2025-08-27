@@ -1,4 +1,4 @@
-import { Home, Trophy, Users, Settings, BookOpen, Award } from "lucide-react";
+import { Home, Users, Settings, BookOpen, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -9,10 +9,9 @@ interface NavigationProps {
 
 const navItems = [
   { id: "home", icon: Home, label: "Today", enabled: true },
-  { id: "leaderboard", icon: Trophy, label: "Leaderboard", enabled: true },
+  { id: "calendar", icon: Calendar, label: "Calendar", enabled: true },
   { id: "sangha", icon: Users, label: "Sangha", enabled: true },
-  { id: "blogs", icon: BookOpen, label: "Blogs", enabled: true },
-  { id: "community", icon: Award, label: "News", enabled: true },
+  { id: "resources", icon: BookOpen, label: "Resources", enabled: true },
   { id: "settings", icon: Settings, label: "Settings", enabled: true },
 ];
 

@@ -29,43 +29,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.identifier || !formData.password) {
-      toast.error('Please enter both email/phone and password', { duration: 5000 });
+      toast.error('Please enter both email and password', { duration: 5000 });
       return;
     }
 
     setLoading(true);
     try {
-      // Check if identifier is email or phone and find the user
-      const isEmail = formData.identifier.includes('@');
-      
-      let userEmail;
-      if (isEmail) {
-        // Direct email login
-        userEmail = formData.identifier;
-      } else {
-        // Phone number - find the email from profiles
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('phone', formData.identifier)
-          .maybeSingle();
-        
-        if (profileError || !profileData) {
-          toast.error('No account found with this phone. Please create an account first.', { duration: 5000 });
-          return;
-        }
-        userEmail = profileData.email;
-      }
-
       // Sign in with email and password
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: userEmail,
+        email: formData.identifier,
         password: formData.password
       });
 
       if (authError) {
         if (authError.message.includes('Invalid login credentials')) {
-          toast.error('Incorrect email/phone or password. Please try again.', { duration: 5000 });
+          toast.error('Incorrect email or password. Please try again.', { duration: 5000 });
         } else if (authError.message.includes('User not found')) {
           toast.error('No account found with this email. Please create an account first.', { duration: 5000 });
         } else {
@@ -98,11 +76,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
       return;
     }
 
-    const isEmail = formData.identifier.includes('@');
-    if (!isEmail) {
-      toast.error('Please enter your email address for password reset', { duration: 5000 });
-      return;
-    }
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(formData.identifier, {
@@ -131,14 +104,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="identifier">Email or Phone Number</Label>
+              <Label htmlFor="identifier">Email</Label>
               <Input
                 id="identifier"
                 name="identifier"
-                type="text"
+                type="email"
                 value={formData.identifier}
                 onChange={handleChange}
-                placeholder="Enter your email or phone number"
+                placeholder="Enter your email"
                 required
                 disabled={loading}
               />

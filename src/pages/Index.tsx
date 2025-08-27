@@ -3,10 +3,9 @@ import { BottomNavigation } from "@/components/BottomNavigation";
 import { EnhancedOnboarding } from "@/components/onboarding/EnhancedOnboarding";
 import { TodayPage } from "@/components/today/TodayPage";
 import { SanghaHubScreen } from "@/components/screens/SanghaHubScreen";
-import { LeaderboardScreen } from "@/components/screens/LeaderboardScreen";
 import { SettingsScreen } from "@/components/screens/SettingsScreen";
-import { BlogScreen } from "@/components/screens/BlogScreen";
-import { CommunityNewsScreen } from "@/components/screens/CommunityNewsScreen";
+import { ResourcesScreen } from "@/components/screens/ResourcesScreen";
+import { CalendarScreen } from "@/components/screens/CalendarScreen";
 import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
@@ -28,14 +27,12 @@ const Index = () => {
     switch (activeTab) {
       case "home":
         return <TodayPage />;
-      case "leaderboard":
-        return <LeaderboardScreen />;
+      case "calendar":
+        return <CalendarScreen />;
       case "sangha":
         return <SanghaHubScreen />;
-      case "blogs":
-        return <BlogScreen />;
-      case "community":
-        return <CommunityNewsScreen />;
+      case "resources":
+        return <ResourcesScreen />;
       case "settings":
         return <SettingsScreen />;
       default:

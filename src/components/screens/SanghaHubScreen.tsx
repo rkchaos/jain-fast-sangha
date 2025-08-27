@@ -112,6 +112,20 @@ export function SanghaHubScreen() {
     
     try {
       setLoading(true);
+      
+      // Check if user is already a member
+      const { data: existingMembership } = await supabase
+        .from('memberships')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('sangha_id', sanghaId)
+        .maybeSingle();
+        
+      if (existingMembership) {
+        toast.error('You are already a member of this sangha!');
+        return;
+      }
+      
       const { error } = await supabase
         .from('memberships')
         .insert({
@@ -199,10 +213,11 @@ export function SanghaHubScreen() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="join">Join Sangha</TabsTrigger>
             <TabsTrigger value="create">Create New Sangha</TabsTrigger>
             <TabsTrigger value="my-sanghas">My Sanghas</TabsTrigger>
+            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
           </TabsList>
 
           <TabsContent value="join" className="space-y-4">
@@ -370,6 +385,25 @@ export function SanghaHubScreen() {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="leaderboard" className="space-y-4">
+            <div className="space-y-4">
+              <div className="flex flex-col space-y-4">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold mb-2">Sangha Leaderboard</h3>
+                  <p className="text-muted-foreground text-sm">See how you rank among your sangha members</p>
+                </div>
+                
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <div className="text-center py-8">
+                    <Trophy className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Leaderboard Coming Soon</h3>
+                    <p className="text-muted-foreground">Rankings will show once you have vrat records to compare</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
