@@ -23,27 +23,62 @@ interface SanghaSelectorProps {
   onCreate: (sangha: { name: string; privacy: 'public' | 'private'; description?: string }) => void;
 }
 
-// Mock data for existing sanghas
-const mockSanghas: Sangha[] = [
-  { id: '1', name: 'Mumbai Jain Samaj', memberCount: 245, location: 'Mumbai', isPrivate: false },
-  { id: '2', name: 'Delhi Digambar Jain Sabha', memberCount: 189, location: 'Delhi', isPrivate: false },
-  { id: '3', name: 'Pune Shwetambar Murtipujak', memberCount: 156, location: 'Pune', isPrivate: false },
-  { id: '4', name: 'Bangalore Jain Society', memberCount: 98, location: 'Bangalore', isPrivate: false },
-  { id: '5', name: 'Ahmedabad Jain Sangh', memberCount: 312, location: 'Ahmedabad', isPrivate: false },
-];
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
+
+// Fetch sanghas from database
+const [sanghas, setSanghas] = useState<Sangha[]>([]);
 
 export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ userId, onJoin, onCreate }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [sanghas, setSanghas] = useState<Sangha[]>([]);
+  const [loading, setLoading] = useState(true);
   const [createForm, setCreateForm] = useState({
     name: '',
     privacy: 'public' as 'public' | 'private',
     description: ''
   });
 
-  const filteredSanghas = mockSanghas.filter(sangha =>
-    sangha.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    sangha.location.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    fetchSanghas();
+  }, []);
+
+  const fetchSanghas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sanghas')
+        .select(`
+          id,
+          name,
+          description,
+          privacy,
+          created_at,
+          memberships!inner(id)
+        `)
+        .eq('privacy', 'public');
+
+      if (error) throw error;
+
+      const transformedSanghas = data?.map(sangha => ({
+        id: sangha.id,
+        name: sangha.name,
+        memberCount: sangha.memberships?.length || 0,
+        location: 'India', // Default location
+        isPrivate: sangha.privacy === 'private'
+      })) || [];
+
+      setSanghas(transformedSanghas);
+    } catch (error) {
+      console.error('Error fetching sanghas:', error);
+      setSanghas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredSanghas = sanghas.filter(sangha =>
+    sangha.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleCreate = () => {
@@ -81,7 +116,17 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ userId, onJoin, 
 
         {/* Sangha List */}
         <div className="space-y-3 max-h-96 overflow-y-auto">
-          {filteredSanghas.map((sangha) => (
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading sanghas...</p>
+            </div>
+          ) : filteredSanghas.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No sanghas found. Create a new one!</p>
+            </div>
+          ) : (
+            filteredSanghas.map((sangha) => (
             <Card key={sangha.id} className="hover:shadow-gentle transition-all duration-200">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -110,7 +155,8 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ userId, onJoin, 
                 </div>
               </CardContent>
             </Card>
-          ))}
+          ))
+          )}
         </div>
 
         {/* Create Sangha Button */}

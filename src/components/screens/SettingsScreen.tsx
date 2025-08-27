@@ -277,6 +277,13 @@ export function SettingsScreen() {
         <Card className="shadow-gentle">
           <CardContent className="pt-6 space-y-3">
             <Button 
+              variant="outline" 
+              className="w-full mb-4"
+              onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLScA1d2Zj2yLi1VzbqOYoKVea7B4-MmtHsq1pngRQWipsU1RXQ/viewform?usp=sharing&ouid=110568833292812051355', '_blank')}
+            >
+              📝 Share Your Feedback
+            </Button>
+            <Button 
               variant="destructive" 
               className="w-full justify-start gap-2"
               onClick={handleSignOut}

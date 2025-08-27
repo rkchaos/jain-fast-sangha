@@ -9,10 +9,12 @@ interface HeroWelcomeProps {
   onLogin?: () => void;
 }
 
+import mahavir from '@/assets/mahavir-bhagwan.jpg';
+
 export const HeroWelcome: React.FC<HeroWelcomeProps> = ({
-  imageSrc = "/placeholder.svg",
-  headline = "Jai Jinendra — Welcome to your Sangha",
-  subText = "A simple place to track your fasting, join your sangha and follow Paryushan.",
+  imageSrc = mahavir,
+  headline = "Tapasya Tracker",
+  subText = "Jai Jinendra - A simple place to track your fasting, join your sangha. JIN DHARM: JIYO AUR JEENE DO",
   onSignup,
   onLogin
 }) => {

@@ -17,16 +17,15 @@ import { useVratRecords } from '@/hooks/useVratRecords';
 import { VratType, VratStatus } from '@/types/database';
 import { toast } from 'sonner';
 
-// Festival content based on copy tokens
-const festivalMessages = [
-  { date: "Day 1", title: "Das Lakshan: Uttam Ahimsa", virtue: "Practice non-violence in thought, word and deed." },
-  { date: "Day 2", title: "Das Lakshan: Uttam Satya", virtue: "Speak truth kindly and with purpose." },
-  { date: "Day 3", title: "Das Lakshan: Uttam Asteya", virtue: "Respect others' possessions—practice contentment." },
-  { date: "Day 4", title: "Das Lakshan: Uttam Brahmacharya", virtue: "Practice restraint and mindful living." },
-  { date: "Day 5", title: "Das Lakshan: Uttam Kshama", virtue: "Forgive freely—release the burden of anger." },
-];
+import mahavir from '@/assets/mahavir-bhagwan.jpg';
 
-const currentFestival = festivalMessages[0]; // For demo
+// Jain Dharma information content
+const jainDharmaInfo = {
+  date: "Jain Dharma",
+  title: "Why Tapasya (Fasting)?",
+  virtue: "Tapasya purifies the soul, builds self-discipline, and develops compassion for all living beings.",
+  description: "Fasting is a fundamental practice in Jainism that helps control desires, purify thoughts, and advance on the spiritual path. This app launched during Paryushan and Das Lakshan 2025 to help the community practice and track their spiritual journey. We welcome your feedback as we grow together."
+};
 
 interface CheckInData {
   type: string;
@@ -120,20 +119,33 @@ export const TodayPage: React.FC = () => {
       {/* Date Header */}
       <DateHeader />
 
-      {/* Festival Widget */}
+      {/* Jain Dharma Info Widget */}
       <FestivalWidget
-        date={currentFestival.date}
-        title={currentFestival.title}
-        virtue={currentFestival.virtue}
-        description="Today's teaching focuses on the fundamental principle of non-violence, extending beyond physical harm to include thoughts and words that may cause suffering to any living being."
+        date={jainDharmaInfo.date}
+        title={jainDharmaInfo.title}
+        virtue={jainDharmaInfo.virtue}
+        description={jainDharmaInfo.description}
       />
 
-      {/* Advertisement Carousel */}
-      <AdCarousel ads={[
-        { id: 'ad-1', mediaUrl: '/placeholder.svg', targetUrl: 'https://example.com/puja-kit', alt: 'Puja Kit' },
-        { id: 'ad-2', mediaUrl: '/placeholder.svg', targetUrl: 'https://example.com/books', alt: 'Jain Books' },
-        { id: 'ad-3', mediaUrl: '/placeholder.svg', targetUrl: 'https://example.com/retreat', alt: 'Spiritual Retreat' }
-      ]} />
+      {/* Feedback Button */}
+      <Button 
+        variant="outline" 
+        className="w-full mb-4"
+        onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLScA1d2Zj2yLi1VzbqOYoKVea7B4-MmtHsq1pngRQWipsU1RXQ/viewform?usp=sharing&ouid=110568833292812051355', '_blank')}
+      >
+        📝 Share Your Feedback
+      </Button>
+
+      {/* Mahavir Bhagwan Image */}
+      <div className="flex justify-center mb-6">
+        <div className="w-32 h-32 rounded-full overflow-hidden shadow-sacred">
+          <img 
+            src={mahavir} 
+            alt="Bhagwan Mahavir" 
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
 
       {/* Check-in Section */}
       <div className="space-y-4">
@@ -167,9 +179,15 @@ export const TodayPage: React.FC = () => {
                     onSelect={setSelectedPastDate}
                     disabled={(date) => {
                       const today = new Date();
+                      today.setHours(0, 0, 0, 0); // Reset time to compare only dates
+                      const selectedDateTime = new Date(date);
+                      selectedDateTime.setHours(0, 0, 0, 0);
+                      
                       const oneMonthAgo = new Date();
                       oneMonthAgo.setMonth(today.getMonth() - 1);
-                      return date >= today || date < oneMonthAgo;
+                      
+                      // Disable future dates and dates older than 1 month
+                      return selectedDateTime >= today || selectedDateTime < oneMonthAgo;
                     }}
                     initialFocus
                   />
