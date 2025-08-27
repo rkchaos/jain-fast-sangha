@@ -82,39 +82,46 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ onBack, onComple
   );
 
   const handleJoin = async (sanghaId: string) => {
-    if (!user?.id) {
-      toast.error('Please log in first');
-      return;
-    }
-
     try {
-      // Join the sangha
+      // Join the sangha - get current user or use userData from signup
+      const currentUserId = user?.id;
+      
+      if (!currentUserId) {
+        // If user state isn't ready yet, show a friendlier message
+        toast.error('Authentication in progress, please try again in a moment', { duration: 5000 });
+        return;
+      }
+
       const { error } = await supabase
         .from('memberships')
         .insert({
-          user_id: user.id,
+          user_id: currentUserId,
           sangha_id: sanghaId,
           role: 'member'
         });
 
       if (error) throw error;
 
-      toast.success('Successfully joined sangha!');
+      toast.success('Successfully joined sangha!', { duration: 5000 });
       onComplete();
     } catch (error) {
       console.error('Error joining sangha:', error);
-      toast.error('Failed to join sangha');
+      toast.error('Failed to join sangha', { duration: 5000 });
     }
   };
 
   const handleCreate = async () => {
     if (!createForm.name.trim()) return;
-    if (!user?.id) {
-      toast.error('Please log in first');
-      return;
-    }
-
+    
     try {
+      // Get current user or wait for auth state
+      const currentUserId = user?.id;
+      
+      if (!currentUserId) {
+        toast.error('Authentication in progress, please try again in a moment', { duration: 5000 });
+        return;
+      }
+
       // Create new sangha
       const { data: sanghaData, error: sanghaError } = await supabase
         .from('sanghas')
@@ -132,20 +139,20 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ onBack, onComple
       const { error: memberError } = await supabase
         .from('memberships')
         .insert({
-          user_id: user.id,
+          user_id: currentUserId,
           sangha_id: sanghaData.id,
           role: 'admin'
         });
 
       if (memberError) throw memberError;
 
-      toast.success('Sangha created successfully!');
+      toast.success('Sangha created successfully!', { duration: 5000 });
       setIsCreateModalOpen(false);
       setCreateForm({ name: '', privacy: 'public', description: '' });
       onComplete();
     } catch (error) {
       console.error('Error creating sangha:', error);
-      toast.error('Failed to create sangha');
+      toast.error('Failed to create sangha', { duration: 5000 });
     }
   };
 
@@ -176,6 +183,11 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ onBack, onComple
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground">Loading sanghas...</p>
+            </div>
+          ) : !user ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Setting up your account...</p>
             </div>
           ) : filteredSanghas.length === 0 ? (
             <div className="text-center py-8">

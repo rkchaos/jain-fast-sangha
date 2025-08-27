@@ -96,7 +96,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
         }
 
         toast.success(`Welcome ${formData.name}! Account created successfully.`, { duration: 5000 });
-        onSignup(formData);
+        
+        // Small delay to ensure auth state is updated before moving to next step
+        setTimeout(() => {
+          onSignup(formData);
+        }, 1000);
       }
     } catch (error: any) {
       console.error('Signup error:', error);
