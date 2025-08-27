@@ -35,39 +35,35 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
 
     setLoading(true);
     try {
-      // Create user account with simple password
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: 'defaultpass123', // Simple default password
+      // Use direct signup edge function
+      const { data, error } = await supabase.functions.invoke('direct_signup', {
+        body: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone
+        }
       });
 
-      if (authError) {
-        if (authError.message.includes('already registered')) {
-          toast.error('Email already registered. Please try logging in instead.');
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        if (data.error.includes('already exists')) {
+          toast.error('User already exists. Please try logging in instead.');
           return;
         }
-        throw authError;
+        throw new Error(data.error);
       }
 
-      if (authData.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            otp_verified: true // Skip verification
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-        }
-
-        toast.success(`Welcome ${formData.name}! Account created successfully.`);
-        onSignup(formData);
+      if (data.success && data.login_url) {
+        // Navigate to the magic link URL to auto-login
+        window.location.href = data.login_url;
+        return;
       }
+
+      toast.success(`Welcome ${formData.name}! Account created successfully.`);
+      onSignup(formData);
     } catch (error: any) {
       console.error('Signup error:', error);
       toast.error('Failed to create account. Please try again.');
