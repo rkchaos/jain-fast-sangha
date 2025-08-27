@@ -46,33 +46,29 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ onBack, onComple
 
   const fetchSanghas = async () => {
     try {
-      // Fetch sanghas and their member counts separately to avoid recursion
+      // Simple query for public sanghas only
       const { data: sanghaData, error: sanghaError } = await supabase
         .from('sanghas')
         .select('id, name, description, privacy, created_at')
         .eq('privacy', 'public');
 
-      if (sanghaError) throw sanghaError;
+      if (sanghaError) {
+        console.error('Error fetching sanghas:', sanghaError);
+        setSanghas([]);
+        setLoading(false);
+        return;
+      }
 
-      // Get member counts for each sangha
-      const sanghasWithCounts = await Promise.all(
-        (sanghaData || []).map(async (sangha) => {
-          const { count } = await supabase
-            .from('memberships')
-            .select('*', { count: 'exact', head: true })
-            .eq('sangha_id', sangha.id);
+      // Transform data without member counts for now to avoid recursion
+      const transformedSanghas = (sanghaData || []).map(sangha => ({
+        id: sangha.id,
+        name: sangha.name,
+        memberCount: 0, // Simplified - no member count for now
+        location: 'India',
+        isPrivate: sangha.privacy === 'private'
+      }));
 
-          return {
-            id: sangha.id,
-            name: sangha.name,
-            memberCount: count || 0,
-            location: 'India', // Default location
-            isPrivate: sangha.privacy === 'private'
-          };
-        })
-      );
-
-      setSanghas(sanghasWithCounts);
+      setSanghas(transformedSanghas);
     } catch (error) {
       console.error('Error fetching sanghas:', error);
       setSanghas([]);

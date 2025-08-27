@@ -44,7 +44,11 @@ const Index = () => {
   };
 
   if (!user) {
-    return <EnhancedOnboarding onComplete={() => window.location.reload()} />;
+    return <EnhancedOnboarding onComplete={() => {
+      // Force re-check of auth state instead of page reload
+      window.location.hash = '';
+      setActiveTab('home');
+    }} />;
   }
 
   return (
