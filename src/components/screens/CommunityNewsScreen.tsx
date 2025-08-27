@@ -1,293 +1,226 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { 
-  Heart, 
-  Share2, 
-  MessageCircle, 
-  TrendingUp,
-  MapPin,
-  Calendar,
-  DollarSign,
-  Users,
-  ExternalLink,
-  Bookmark,
-  Bell
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, Heart, MessageCircle, Share2, Clock, ExternalLink } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
 
-interface NewsArticle {
+interface NewsItem {
   id: string;
   title: string;
   content: string;
-  author: string;
-  date: string;
-  category: "news" | "announcement" | "spiritual";
-  location?: string;
-  likes: number;
-  comments: number;
-  isLiked: boolean;
-  imageUrl?: string;
+  category: string;
   tags: string[];
+  author: string;
+  created_at: string;
+  likes_count?: number;
+  comments_count?: number;
+  is_liked?: boolean;
 }
-
-interface Campaign {
-  id: string;
-  title: string;
-  description: string;
-  organizationName: string;
-  targetAmount: number;
-  currentAmount: number;
-  daysLeft: number;
-  donorCount: number;
-  category: "temple" | "education" | "animal" | "environment" | "humanitarian";
-  isVerified: boolean;
-  imageUrl?: string;
-}
-
-const newsArticles: NewsArticle[] = [
-  {
-    id: "1",
-    title: "Das Lakshan Parv Celebrations Begin Across India",
-    content: "The sacred ten-day festival of Das Lakshan Parv has commenced with grand celebrations in Jain temples nationwide. Devotees are observing enhanced spiritual practices...",
-    author: "Jain Uwas Team",
-    date: "2 hours ago",
-    category: "announcement",
-    location: "Pan India",
-    likes: 156,
-    comments: 23,
-    isLiked: false,
-    tags: ["Festival", "Das Lakshan", "Celebration"]
-  },
-  {
-    id: "2",
-    title: "New Jain Meditation Center Opens in Bangalore",
-    content: "A state-of-the-art meditation and spiritual learning center has been inaugurated in Bangalore, featuring modern amenities while preserving traditional values...",
-    author: "Jain Uwas Team",
-    date: "5 hours ago", 
-    category: "announcement",
-    location: "Bangalore",
-    likes: 89,
-    comments: 12,
-    isLiked: true,
-    tags: ["Infrastructure", "Meditation", "Bangalore"]
-  },
-  {
-    id: "3",
-    title: "Acharya Shri's Teachings on Mindful Living",
-    content: "In his recent discourse, Acharya Shri emphasized the importance of integrating ancient Jain principles with modern lifestyle challenges...",
-    author: "Jain Uwas Team",
-    date: "1 day ago",
-    category: "spiritual",
-    likes: 234,
-    comments: 45,
-    isLiked: true,
-    tags: ["Spiritual", "Teaching", "Mindfulness"]
-  },
-  {
-    id: "4",
-    title: "App Update: New Features for Better Spiritual Tracking",
-    content: "We're excited to announce new features in the Jain Sangha app including enhanced calendar tracking, community blogs, and improved meditation timers...",
-    author: "Jain Uwas Team",
-    date: "3 days ago",
-    category: "announcement",
-    likes: 145,
-    comments: 28,
-    isLiked: false,
-    tags: ["App Update", "Features", "Technology"]
-  }
-];
-
-const campaigns: Campaign[] = [
-  {
-    id: "1",
-    title: "Save Elephants Sanctuary Project",
-    description: "Supporting elephant welfare and creating safe havens for rescued elephants in alignment with Jain principles of non-violence.",
-    organizationName: "Jain Animal Welfare Trust",
-    targetAmount: 500000,
-    currentAmount: 342000,
-    daysLeft: 15,
-    donorCount: 1247,
-    category: "animal",
-    isVerified: true
-  },
-  {
-    id: "2",
-    title: "Heritage Temple Restoration Fund",
-    description: "Restoring the ancient Palitana temple complex to preserve our sacred heritage for future generations.",
-    organizationName: "Temple Conservation Society",
-    targetAmount: 2000000,
-    currentAmount: 1200000,
-    daysLeft: 45,
-    donorCount: 856,
-    category: "temple",
-    isVerified: true
-  },
-  {
-    id: "3",
-    title: "Free Education for Underprivileged Children",
-    description: "Providing quality education and spiritual values to children from economically disadvantaged backgrounds.",
-    organizationName: "Jain Education Foundation",
-    targetAmount: 300000,
-    currentAmount: 185000,
-    daysLeft: 30,
-    donorCount: 423,
-    category: "education",
-    isVerified: true
-  }
-];
 
 export function CommunityNewsScreen() {
-  const [likedArticles, setLikedArticles] = useState<Set<string>>(new Set(["2", "3"]));
-  const [bookmarkedArticles, setBookmarkedArticles] = useState<Set<string>>(new Set());
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const toggleLike = (articleId: string) => {
-    setLikedArticles(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(articleId)) {
-        newSet.delete(articleId);
+  const categories = [
+    { id: "all", label: "All" },
+    { id: "news", label: "News" },
+    { id: "events", label: "Events" },
+    { id: "announcements", label: "Announcements" },
+    { id: "festivals", label: "Festivals" }
+  ];
+
+  useEffect(() => {
+    fetchNews();
+  }, []);
+
+  const fetchNews = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('news')
+        .select(`
+          *,
+          news_likes (id, user_id),
+          news_comments (id)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const newsWithCounts = data?.map(item => ({
+        ...item,
+        likes_count: item.news_likes?.length || 0,
+        comments_count: item.news_comments?.length || 0,
+        is_liked: user ? item.news_likes?.some((like: any) => like.user_id === user.id) : false
+      })) || [];
+
+      setNews(newsWithCounts);
+    } catch (error) {
+      console.error('Error fetching news:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load news",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async (newsId: string) => {
+    if (!user) return;
+
+    try {
+      const newsItem = news.find(n => n.id === newsId);
+      if (!newsItem) return;
+
+      if (newsItem.is_liked) {
+        await supabase
+          .from('news_likes')
+          .delete()
+          .match({ news_id: newsId, user_id: user.id });
       } else {
-        newSet.add(articleId);
+        await supabase
+          .from('news_likes')
+          .insert({ news_id: newsId, user_id: user.id });
       }
-      return newSet;
-    });
-  };
 
-  const toggleBookmark = (articleId: string) => {
-    setBookmarkedArticles(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(articleId)) {
-        newSet.delete(articleId);
-      } else {
-        newSet.add(articleId);
-      }
-      return newSet;
-    });
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "news": return "bg-primary text-primary-foreground";
-      case "announcement": return "bg-jade text-jade-foreground";
-      case "spiritual": return "bg-secondary text-secondary-foreground";
-      default: return "bg-muted text-muted-foreground";
+      fetchNews();
+    } catch (error) {
+      console.error('Error handling like:', error);
     }
   };
 
-  const getCampaignCategoryColor = (category: string) => {
-    switch (category) {
-      case "temple": return "bg-primary text-primary-foreground";
-      case "animal": return "bg-jade text-jade-foreground"; 
-      case "education": return "bg-soft-blue text-soft-blue-foreground";
-      case "environment": return "bg-secondary text-secondary-foreground";
-      case "humanitarian": return "bg-accent text-accent-foreground";
-      default: return "bg-muted text-muted-foreground";
-    }
-  };
+  const filteredNews = news.filter(item => {
+    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         item.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
 
-  const formatAmount = (amount: number) => {
-    if (amount >= 100000) {
-      return `₹${(amount / 100000).toFixed(1)}L`;
-    }
-    return `₹${amount.toLocaleString()}`;
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading news...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-dawn p-4 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Community Hub</h1>
-          <p className="text-muted-foreground">Stay connected with our global family</p>
+    <div className="flex flex-col min-h-screen bg-background">
+      <div className="pt-12 pb-6 px-6">
+        <h1 className="text-2xl font-bold text-center mb-6">Community News</h1>
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search news..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
         </div>
-        <Button variant="outline" size="icon">
-          <Bell className="w-4 h-4" />
-        </Button>
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {categories.map((category) => (
+            <Button
+              key={category.id}
+              variant={selectedCategory === category.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(category.id)}
+              className="whitespace-nowrap flex-shrink-0"
+            >
+              {category.label}
+            </Button>
+          ))}
+        </div>
       </div>
 
-      {/* News & Updates - No Sacred Causes */}
-      <div className="space-y-4">
-
-        {/* Announcements & Updates */}
-        <div className="space-y-4">
-          {newsArticles.map((article) => (
-              <Card key={article.id} className="shadow-gentle">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
+      <div className="flex-1 px-6 pb-20">
+        {filteredNews.length === 0 ? (
+          <Card className="text-center py-8">
+            <CardContent>
+              <ExternalLink className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-muted-foreground mb-2">No News Available</h3>
+              <p className="text-sm text-muted-foreground">
+                Check back later for community updates and announcements.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {filteredNews.map((item) => (
+              <Card key={item.id} className="shadow-gentle">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-gradient-peaceful text-xs">
+                        {item.author?.charAt(0) || 'A'}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Badge className={getCategoryColor(article.category)}>
-                          {article.category}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{item.author}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {item.category}
                         </Badge>
-                        {article.location && (
-                          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                            <MapPin className="w-3 h-3" />
-                            <span>{article.location}</span>
-                          </div>
-                        )}
                       </div>
-                      <CardTitle className="text-lg leading-6">{article.title}</CardTitle>
-                      <CardDescription className="mt-2">
-                        {article.content}
-                      </CardDescription>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                      </div>
                     </div>
+                  </div>
+                  <CardTitle className="text-lg">{item.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">{item.content}</p>
+                  {item.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {item.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-4 pt-2 border-t">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => toggleBookmark(article.id)}
-                      className={bookmarkedArticles.has(article.id) ? "text-primary" : ""}
+                      onClick={() => handleLike(item.id)}
+                      className="gap-2 text-muted-foreground hover:text-primary"
                     >
-                      <Bookmark className="w-4 h-4" />
+                      <Heart className={`h-4 w-4 ${item.is_liked ? 'fill-current text-red-500' : ''}`} />
+                      {item.likes_count}
                     </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <span>By {article.author}</span>
-                      <span>•</span>
-                      <span>{article.date}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleLike(article.id)}
-                        className={likedArticles.has(article.id) ? "text-red-500" : ""}
-                      >
-                        <Heart className={`w-4 h-4 mr-1 ${likedArticles.has(article.id) ? "fill-current" : ""}`} />
-                        <span className="text-xs">{article.likes + (likedArticles.has(article.id) ? 1 : 0)}</span>
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <MessageCircle className="w-4 h-4 mr-1" />
-                        <span className="text-xs">{article.comments}</span>
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Share2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1 mt-3">
-                    {article.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
+                    <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-primary">
+                      <MessageCircle className="h-4 w-4" />
+                      {item.comments_count}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-primary">
+                      <Share2 className="h-4 w-4" />
+                      Share
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-
-        {/* Load More */}
-        <Button variant="outline" className="w-full">
-          Load More Updates
-        </Button>
+        )}
       </div>
     </div>
   );

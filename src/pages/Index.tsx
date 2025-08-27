@@ -5,6 +5,8 @@ import { TodayPage } from "@/components/today/TodayPage";
 import { SanghaHubScreen } from "@/components/screens/SanghaHubScreen";
 import { LeaderboardScreen } from "@/components/screens/LeaderboardScreen";
 import { SettingsScreen } from "@/components/screens/SettingsScreen";
+import { BlogScreen } from "@/components/screens/BlogScreen";
+import { CommunityNewsScreen } from "@/components/screens/CommunityNewsScreen";
 import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
@@ -30,6 +32,10 @@ const Index = () => {
         return <LeaderboardScreen />;
       case "sangha":
         return <SanghaHubScreen />;
+      case "blogs":
+        return <BlogScreen />;
+      case "community":
+        return <CommunityNewsScreen />;
       case "settings":
         return <SettingsScreen />;
       default:

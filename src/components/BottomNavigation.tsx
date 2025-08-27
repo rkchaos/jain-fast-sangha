@@ -10,9 +10,9 @@ interface NavigationProps {
 const navItems = [
   { id: "home", icon: Home, label: "Today", enabled: true },
   { id: "leaderboard", icon: Trophy, label: "Leaderboard", enabled: true },
-  { id: "sangha", icon: Users, label: "Sangha", enabled: false },
-  { id: "blogs", icon: BookOpen, label: "Blogs", enabled: false },
-  { id: "community", icon: Award, label: "News", enabled: false },
+  { id: "sangha", icon: Users, label: "Sangha", enabled: true },
+  { id: "blogs", icon: BookOpen, label: "Blogs", enabled: true },
+  { id: "community", icon: Award, label: "News", enabled: true },
   { id: "settings", icon: Settings, label: "Settings", enabled: true },
 ];
 

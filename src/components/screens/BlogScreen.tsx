@@ -1,313 +1,311 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
 import { 
   Plus, 
   Heart, 
   MessageCircle, 
   Share2, 
-  Play,
   BookOpen,
   Clock,
   User,
   Search,
   Filter,
-  Sparkles
+  PlusCircle
 } from 'lucide-react';
 
-interface BlogPost {
+interface Blog {
   id: string;
   title: string;
   content: string;
-  author: string;
-  authorAvatar?: string;
-  image?: string;
-  youtubeUrl?: string;
-  tags: string[];
   category: string;
-  likes: number;
-  comments: number;
-  createdAt: string;
-  timestamp: Date;
-  isLiked: boolean;
+  tags: string[];
+  image_url?: string;
+  youtube_url?: string;
+  created_at: string;
+  user_id: string;
+  user_name?: string;
+  likes_count?: number;
+  comments_count?: number;
+  is_liked?: boolean;
 }
 
 const blogCategories = [
   'All',
-  'Nutrition & Health',
-  'Spiritual Practice',
-  'Festival & Celebrations',
-  'Meditation & Mindfulness',
-  'Community Stories',
-  'Recipes & Food',
-  'Philosophy & Teachings'
-];
-
-const mockBlogs: BlogPost[] = [
-  {
-    id: '1',
-    title: 'Healthy Fasting Foods: What to Eat During Upvas',
-    content: 'During Jain fasting, it\'s important to choose foods that are pure and provide sustained energy. Here are some traditional and healthy options that align with our spiritual practice...',
-    author: 'Dr. Priya Jain',
-    authorAvatar: '',
-    image: '/placeholder.svg',
-    youtubeUrl: 'https://youtube.com/watch?v=example1',
-    tags: ['Nutrition', 'Fasting', 'Health'],
-    category: 'Nutrition & Health',
-    likes: 24,
-    comments: 8,
-    createdAt: '2 hours ago',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    isLiked: false
-  },
-  {
-    id: '2',
-    title: 'Meditation Techniques for Spiritual Growth',
-    content: 'Simple meditation practices that can enhance your spiritual journey and complement your fasting practice. These techniques have been passed down through generations...',
-    author: 'Acharya Shri Vijay',
-    authorAvatar: '',
-    tags: ['Meditation', 'Spirituality', 'Practice'],
-    category: 'Meditation & Mindfulness',
-    likes: 45,
-    comments: 12,
-    createdAt: '1 day ago',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    isLiked: true
-  },
-  {
-    id: '3',
-    title: 'Preparing Mind and Body for Paryushan',
-    content: 'As we approach the holy period of Paryushan, here are some ways to prepare yourself mentally and physically for this sacred time of reflection and purification...',
-    author: 'Sunita Mehta',
-    authorAvatar: '',
-    image: '/placeholder.svg',
-    youtubeUrl: 'https://youtube.com/watch?v=example3',
-    tags: ['Paryushan', 'Preparation', 'Festival'],
-    category: 'Festival & Celebrations',
-    likes: 67,
-    comments: 23,
-    createdAt: '3 days ago',
-    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    isLiked: false
-  },
-  {
-    id: '4',
-    title: 'Live: Morning Prayers and Meditation Session',
-    content: 'Join us for our daily morning prayer session with guided meditation. Today we focus on gratitude and mindfulness in our spiritual practice.',
-    author: 'Temple Community',
-    authorAvatar: '',
-    youtubeUrl: 'https://youtube.com/watch?v=live-session',
-    tags: ['Live', 'Prayer', 'Meditation'],
-    category: 'Spiritual Practice',
-    likes: 89,
-    comments: 34,
-    createdAt: '30 minutes ago',
-    timestamp: new Date(Date.now() - 30 * 60 * 1000),
-    isLiked: false
-  }
+  'community',
+  'spiritual', 
+  'teachings',
+  'personal'
 ];
 
 export function BlogScreen() {
-  const [blogs, setBlogs] = useState<BlogPost[]>(mockBlogs);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortBy, setSortBy] = useState('recent');
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [newBlog, setNewBlog] = useState({
-    title: '',
-    content: '',
-    image: '',
-    youtubeUrl: '',
-    tags: '',
-    category: 'Spiritual Practice'
+    title: "",
+    content: "",
+    category: "community",
+    tags: "",
+    image_url: "",
+    youtube_url: ""
   });
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const handleLike = (blogId: string) => {
-    setBlogs(blogs.map(blog => 
-      blog.id === blogId 
-        ? { ...blog, isLiked: !blog.isLiked, likes: blog.isLiked ? blog.likes - 1 : blog.likes + 1 }
-        : blog
-    ));
-  };
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
 
-  const handleCreateBlog = () => {
-    if (newBlog.title && newBlog.content) {
-      const blog: BlogPost = {
-        id: Date.now().toString(),
-        title: newBlog.title,
-        content: newBlog.content,
-        author: 'You',
-        image: newBlog.image || undefined,
-        youtubeUrl: newBlog.youtubeUrl || undefined,
-        tags: newBlog.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-        category: newBlog.category,
-        likes: 0,
-        comments: 0,
-        createdAt: 'Just now',
-        timestamp: new Date(),
-        isLiked: false
-      };
-      
-      setBlogs([blog, ...blogs]);
-      setNewBlog({ title: '', content: '', image: '', youtubeUrl: '', tags: '', category: 'Spiritual Practice' });
-      setShowCreateModal(false);
+  const fetchBlogs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('blogs')
+        .select(`
+          *,
+          profiles:user_id (name),
+          blog_likes (id, user_id),
+          blog_comments (id)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const blogsWithCounts = data?.map(blog => ({
+        ...blog,
+        user_name: blog.profiles?.name || 'Anonymous',
+        likes_count: blog.blog_likes?.length || 0,
+        comments_count: blog.blog_comments?.length || 0,
+        is_liked: user ? blog.blog_likes?.some((like: any) => like.user_id === user.id) : false
+      })) || [];
+
+      setBlogs(blogsWithCounts);
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load blogs",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredAndSortedBlogs = blogs
-    .filter(blog => {
-      const matchesSearch = blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        blog.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        blog.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      
-      const matchesCategory = selectedCategory === 'All' || blog.category === selectedCategory;
-      
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'recent') {
-        return b.timestamp.getTime() - a.timestamp.getTime();
-      } else if (sortBy === 'popular') {
-        return b.likes - a.likes;
-      }
-      return 0;
-    });
+  const handleCreateBlog = async () => {
+    if (!user) return;
 
-  const renderYouTubeEmbed = (url: string) => {
-    const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
-    return (
-      <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-        <iframe
-          src={`https://www.youtube.com/embed/${videoId}`}
-          title="YouTube video"
-          className="w-full h-full"
-          frameBorder="0"
-          allowFullScreen
-        />
-      </div>
-    );
+    try {
+      const { error } = await supabase
+        .from('blogs')
+        .insert({
+          title: newBlog.title,
+          content: newBlog.content,
+          category: newBlog.category as "community" | "spiritual" | "teachings" | "personal",
+          tags: newBlog.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+          image_url: newBlog.image_url || null,
+          youtube_url: newBlog.youtube_url || null,
+          user_id: user.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Blog Submitted!",
+        description: "Your blog has been submitted for approval and will be published soon.",
+      });
+
+      setIsCreateModalOpen(false);
+      setNewBlog({
+        title: "",
+        content: "",
+        category: "community",
+        tags: "",
+        image_url: "",
+        youtube_url: ""
+      });
+      
+      fetchBlogs();
+    } catch (error) {
+      console.error('Error creating blog:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create blog",
+        variant: "destructive"
+      });
+    }
   };
 
+  const handleLike = async (blogId: string) => {
+    if (!user) return;
+
+    try {
+      const blog = blogs.find(b => b.id === blogId);
+      if (!blog) return;
+
+      if (blog.is_liked) {
+        // Unlike
+        await supabase
+          .from('blog_likes')
+          .delete()
+          .match({ blog_id: blogId, user_id: user.id });
+      } else {
+        // Like
+        await supabase
+          .from('blog_likes')
+          .insert({ blog_id: blogId, user_id: user.id });
+      }
+
+      fetchBlogs();
+    } catch (error) {
+      console.error('Error handling like:', error);
+    }
+  };
+
+  const filteredBlogs = blogs.filter(blog => {
+    const matchesSearch = blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         blog.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         blog.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesCategory = selectedCategory === "All" || blog.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading blogs...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background p-4 space-y-6 pb-24">
+    <div className="flex flex-col min-h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+      <div className="pt-12 pb-6 px-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
             <BookOpen className="h-6 w-6" />
             Community Blogs
           </h1>
-          <p className="text-muted-foreground">Share knowledge and learn from the community</p>
+          {user && (
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Write
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Blog</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      value={newBlog.title}
+                      onChange={(e) => setNewBlog({...newBlog, title: e.target.value})}
+                      placeholder="Enter blog title"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="content">Content</Label>
+                    <Textarea
+                      id="content"
+                      value={newBlog.content}
+                      onChange={(e) => setNewBlog({...newBlog, content: e.target.value})}
+                      placeholder="Write your blog content..."
+                      rows={6}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="category">Category</Label>
+                    <Select value={newBlog.category} onValueChange={(value) => setNewBlog({...newBlog, category: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {blogCategories.filter(cat => cat !== 'All').map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="tags">Tags (comma separated)</Label>
+                    <Input
+                      id="tags"
+                      value={newBlog.tags}
+                      onChange={(e) => setNewBlog({...newBlog, tags: e.target.value})}
+                      placeholder="spirituality, meditation, dharma"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="image_url">Image URL (optional)</Label>
+                    <Input
+                      id="image_url"
+                      value={newBlog.image_url}
+                      onChange={(e) => setNewBlog({...newBlog, image_url: e.target.value})}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="youtube_url">YouTube URL (optional)</Label>
+                    <Input
+                      id="youtube_url"
+                      value={newBlog.youtube_url}
+                      onChange={(e) => setNewBlog({...newBlog, youtube_url: e.target.value})}
+                      placeholder="https://youtube.com/watch?v=..."
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleCreateBlog} 
+                    className="w-full"
+                    disabled={!newBlog.title || !newBlog.content}
+                  >
+                    Submit for Approval
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
-        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-          <DialogTrigger asChild>
-            <Button variant="sacred" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Write Blog
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Blog Post</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={newBlog.title}
-                  onChange={(e) => setNewBlog({ ...newBlog, title: e.target.value })}
-                  placeholder="Enter blog title..."
-                />
-              </div>
-              <div>
-                <Label htmlFor="content">Content</Label>
-                <Textarea
-                  id="content"
-                  value={newBlog.content}
-                  onChange={(e) => setNewBlog({ ...newBlog, content: e.target.value })}
-                  placeholder="Write your blog content..."
-                  rows={6}
-                />
-              </div>
-              <div>
-                <Label htmlFor="image">Image URL (optional)</Label>
-                <Input
-                  id="image"
-                  value={newBlog.image}
-                  onChange={(e) => setNewBlog({ ...newBlog, image: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-              <div>
-                <Label htmlFor="youtube">YouTube URL (optional)</Label>
-                <Input
-                  id="youtube"
-                  value={newBlog.youtubeUrl}
-                  onChange={(e) => setNewBlog({ ...newBlog, youtubeUrl: e.target.value })}
-                  placeholder="https://youtube.com/watch?v=..."
-                />
-              </div>
-              <div>
-                <Label htmlFor="category">Category</Label>
-                <Select value={newBlog.category} onValueChange={(value) => setNewBlog({ ...newBlog, category: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {blogCategories.filter(cat => cat !== 'All').map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="tags">Tags (comma separated)</Label>
-                <Input
-                  id="tags"
-                  value={newBlog.tags}
-                  onChange={(e) => setNewBlog({ ...newBlog, tags: e.target.value })}
-                  placeholder="Health, Fasting, Spirituality"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={handleCreateBlog} className="flex-1">
-                  Publish Blog
-                </Button>
-                <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
 
-      {/* Search and Filters */}
-      <div className="space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search blogs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <div className="flex gap-3">
+        {/* Search and Filters */}
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search blogs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="flex-1">
+            <SelectTrigger>
               <Filter className="h-4 w-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
@@ -319,137 +317,116 @@ export function BlogScreen() {
               ))}
             </SelectContent>
           </Select>
-          
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[130px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recent">Most Recent</SelectItem>
-              <SelectItem value="popular">Most Popular</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
-      {/* Live Blogs Section */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold">Live & Recent</h2>
-        </div>
-        <div className="grid gap-3">
-          {filteredAndSortedBlogs
-            .filter(blog => blog.timestamp.getTime() > Date.now() - 24 * 60 * 60 * 1000)
-            .slice(0, 2)
-            .map((blog) => (
-              <Card key={blog.id} className="shadow-gentle border-primary/20">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
+      {/* Blog List */}
+      <div className="flex-1 px-6 pb-20">
+        {filteredBlogs.length === 0 ? (
+          <Card className="text-center py-8">
+            <CardContent>
+              <PlusCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-muted-foreground mb-2">No Blogs Yet</h3>
+              <p className="text-sm text-muted-foreground">
+                Be the first to share your spiritual journey with the community!
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {filteredBlogs.map((blog) => (
+              <Card key={blog.id} className="shadow-gentle">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3 mb-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={blog.authorAvatar} />
-                      <AvatarFallback>
-                        <User className="h-4 w-4" />
+                      <AvatarFallback className="bg-gradient-peaceful text-xs">
+                        {blog.user_name?.charAt(0) || 'A'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="secondary" className="text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{blog.user_name}</span>
+                        <Badge variant="outline" className="text-xs">
                           {blog.category}
                         </Badge>
-                        {blog.timestamp.getTime() > Date.now() - 60 * 60 * 1000 && (
-                          <Badge variant="destructive" className="text-xs animate-pulse">
-                            LIVE
-                          </Badge>
-                        )}
                       </div>
-                      <h3 className="font-medium text-sm">{blog.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">{blog.createdAt}</p>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {formatDistanceToNow(new Date(blog.created_at), { addSuffix: true })}
+                      </div>
                     </div>
+                  </div>
+                  <CardTitle className="text-lg">{blog.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {blog.image_url && (
+                    <img 
+                      src={blog.image_url} 
+                      alt={blog.title}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                  )}
+                  
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    {blog.content}
+                  </p>
+
+                  {blog.youtube_url && (
+                    <div className="bg-muted/50 p-3 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-2">Video:</p>
+                      <a 
+                        href={blog.youtube_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary text-sm hover:underline"
+                      >
+                        Watch on YouTube
+                      </a>
+                    </div>
+                  )}
+
+                  {blog.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {blog.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-4 pt-2 border-t">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleLike(blog.id)}
+                      className="gap-2 text-muted-foreground hover:text-primary"
+                    >
+                      <Heart className={`h-4 w-4 ${blog.is_liked ? 'fill-current text-red-500' : ''}`} />
+                      {blog.likes_count}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2 text-muted-foreground hover:text-primary"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      {blog.comments_count}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2 text-muted-foreground hover:text-primary"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      Share
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
-        </div>
-      </div>
-
-      {/* All Blog Posts */}
-      <div className="space-y-6">
-        <h2 className="text-lg font-semibold">All Posts</h2>
-        {filteredAndSortedBlogs.map((blog) => (
-          <Card key={blog.id} className="shadow-gentle">
-            <CardHeader>
-              <div className="flex items-start gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={blog.authorAvatar} />
-                  <AvatarFallback>
-                    <User className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">{blog.author}</h3>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>{blog.createdAt}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <CardTitle className="mt-2 text-lg">{blog.title}</CardTitle>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-foreground leading-relaxed">{blog.content}</p>
-              
-              {/* Image */}
-              {blog.image && (
-                <div className="rounded-lg overflow-hidden">
-                  <img 
-                    src={blog.image} 
-                    alt={blog.title}
-                    className="w-full h-48 object-cover"
-                  />
-                </div>
-              )}
-              
-              {/* YouTube Embed */}
-              {blog.youtubeUrl && renderYouTubeEmbed(blog.youtubeUrl)}
-              
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2">
-                {blog.tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-              
-              {/* Actions */}
-              <div className="flex items-center justify-between pt-2 border-t">
-                <div className="flex items-center gap-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleLike(blog.id)}
-                    className={blog.isLiked ? 'text-red-500' : ''}
-                  >
-                    <Heart className={`h-4 w-4 mr-1 ${blog.isLiked ? 'fill-current' : ''}`} />
-                    {blog.likes}
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <MessageCircle className="h-4 w-4 mr-1" />
-                    {blog.comments}
-                  </Button>
-                </div>
-                <Button variant="ghost" size="sm">
-                  <Share2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+          </div>
+        )}
       </div>
     </div>
   );
