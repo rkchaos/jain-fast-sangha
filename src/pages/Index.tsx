@@ -45,9 +45,12 @@ const Index = () => {
 
   if (!user) {
     return <EnhancedOnboarding onComplete={() => {
-      // Force re-check of auth state instead of page reload
-      window.location.hash = '';
+      // Force immediate navigation to home
       setActiveTab('home');
+      // Also trigger a window reload as fallback to ensure auth state updates
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     }} />;
   }
 

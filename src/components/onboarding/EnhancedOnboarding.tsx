@@ -17,6 +17,8 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
     name: string;
     phone: string;
     email: string;
+    password: string;
+    confirmPassword: string;
   } | null>(null);
 
   const handleWelcome = () => {
@@ -32,7 +34,14 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
 
   const handleSanghaSelection = () => {
     toast.success("Welcome! 🙏 You're all set to begin your spiritual journey", { duration: 5000 });
-    onComplete();
+    // Force immediate completion and navigation
+    setTimeout(() => {
+      onComplete();
+    }, 100);
+  };
+
+  const handleBackToSignup = () => {
+    setCurrentStep('signup');
   };
 
   switch (currentStep) {
@@ -49,6 +58,7 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
         <SignupForm 
           onSignup={handleSignup}
           onBack={() => setCurrentStep('welcome')}
+          userData={userData}
         />
       );
 
@@ -63,7 +73,7 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
     case 'sangha':
       return (
         <SanghaSelector
-          onBack={() => setCurrentStep('signup')}
+          onBack={handleBackToSignup}
           onComplete={handleSanghaSelection}
           userData={userData}
         />

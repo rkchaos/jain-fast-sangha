@@ -9,16 +9,17 @@ import { toast } from 'sonner';
 interface SignupFormProps {
   onSignup: (data: { name: string; phone: string; email: string; password: string; confirmPassword: string }) => void;
   onBack?: () => void;
+  userData?: { name: string; phone: string; email: string; password: string; confirmPassword: string } | null;
 }
 
-export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
+export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack, userData }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: ''
+    name: userData?.name || '',
+    email: userData?.email || '',
+    phone: userData?.phone || '',
+    password: userData?.password || '',
+    confirmPassword: userData?.confirmPassword || ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
