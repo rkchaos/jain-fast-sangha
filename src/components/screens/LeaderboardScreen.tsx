@@ -20,15 +20,8 @@ export function LeaderboardScreen() {
   const [activeTab, setActiveTab] = useState<"weekly" | "monthly">("weekly");
   const [viewType, setViewType] = useState<"sangha" | "global">("sangha");
 
-  // Sample leaderboard data
-  const leaderboardData: LeaderboardEntry[] = [
-    { id: "1", name: "Priya Mehta", score: 850, streak: 12, rank: 1, sanghaName: "Mumbai Jain Centre" },
-    { id: "2", name: "Raj Jain", score: 720, streak: 8, rank: 2, sanghaName: "Mumbai Jain Centre" },
-    { id: "3", name: "Meera Shah", score: 680, streak: 15, rank: 3, sanghaName: "Mumbai Jain Centre" },
-    { id: "4", name: "Amit Jain", score: 620, streak: 6, rank: 4, sanghaName: "Mumbai Jain Centre" },
-    { id: "5", name: "Kavita Jain", score: 580, streak: 9, rank: 5, sanghaName: "Mumbai Jain Centre" },
-    { id: "6", name: "You", score: 520, streak: 7, rank: 6, sanghaName: "Mumbai Jain Centre" },
-  ];
+  // Empty leaderboard data - to be populated from Supabase
+  const leaderboardData: LeaderboardEntry[] = [];
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -97,64 +90,74 @@ export function LeaderboardScreen() {
       {/* Leaderboard */}
       <div className="flex-1 px-6 pb-20">
         <Card className="shadow-gentle">
-          <CardContent className="p-0">
-            <div className="space-y-0">
-              {leaderboardData.map((entry, index) => (
-                <div
-                  key={entry.id}
-                  className={cn(
-                    "flex items-center gap-4 p-4 transition-colors",
-                    entry.name === "You" 
-                      ? "bg-accent/20 border-l-4 border-l-primary" 
-                      : "hover:bg-muted/50",
-                    index < leaderboardData.length - 1 && "border-b border-border"
-                  )}
-                >
-                  {/* Rank */}
-                  <div className="flex items-center justify-center w-8">
-                    {getRankIcon(entry.rank)}
-                  </div>
-
-                  {/* Avatar */}
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={entry.avatar} />
-                    <AvatarFallback className="bg-gradient-peaceful">
-                      {getInitials(entry.name)}
-                    </AvatarFallback>
-                  </Avatar>
-
-                  {/* User Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className={cn(
-                        "font-medium truncate",
-                        entry.name === "You" && "text-primary font-semibold"
-                      )}>
-                        {entry.name}
-                      </h3>
-                      {entry.name === "You" && (
-                        <Badge variant="secondary" className="text-xs">You</Badge>
-                      )}
+          <CardContent className="p-6">
+            {leaderboardData.length === 0 ? (
+              <div className="text-center py-8">
+                <Trophy className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">No Rankings Yet</h3>
+                <p className="text-sm text-muted-foreground">
+                  Start tracking your vrats to appear on the leaderboard!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-0">
+                {leaderboardData.map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    className={cn(
+                      "flex items-center gap-4 p-4 transition-colors",
+                      entry.name === "You" 
+                        ? "bg-accent/20 border-l-4 border-l-primary" 
+                        : "hover:bg-muted/50",
+                      index < leaderboardData.length - 1 && "border-b border-border"
+                    )}
+                  >
+                    {/* Rank */}
+                    <div className="flex items-center justify-center w-8">
+                      {getRankIcon(entry.rank)}
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {entry.sanghaName}
-                    </p>
-                  </div>
 
-                  {/* Stats */}
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 justify-end mb-1">
-                      <Star className="h-4 w-4 text-primary" />
-                      <span className="font-semibold">{entry.score}</span>
+                    {/* Avatar */}
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={entry.avatar} />
+                      <AvatarFallback className="bg-gradient-peaceful">
+                        {getInitials(entry.name)}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    {/* User Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className={cn(
+                          "font-medium truncate",
+                          entry.name === "You" && "text-primary font-semibold"
+                        )}>
+                          {entry.name}
+                        </h3>
+                        {entry.name === "You" && (
+                          <Badge variant="secondary" className="text-xs">You</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {entry.sanghaName}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1 justify-end">
-                      <Flame className="h-3 w-3 text-primary" />
-                      <span className="text-sm text-muted-foreground">{entry.streak}</span>
+
+                    {/* Stats */}
+                    <div className="text-right">
+                      <div className="flex items-center gap-1 justify-end mb-1">
+                        <Star className="h-4 w-4 text-primary" />
+                        <span className="font-semibold">{entry.score}</span>
+                      </div>
+                      <div className="flex items-center gap-1 justify-end">
+                        <Flame className="h-3 w-3 text-primary" />
+                        <span className="text-sm text-muted-foreground">{entry.streak}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -164,15 +167,15 @@ export function LeaderboardScreen() {
             <h3 className="font-semibold mb-3 text-center">Your {activeTab} Summary</h3>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-primary">520</div>
+                <div className="text-2xl font-bold text-primary">0</div>
                 <div className="text-xs text-muted-foreground">Total Points</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-primary">7</div>
+                <div className="text-2xl font-bold text-primary">0</div>
                 <div className="text-xs text-muted-foreground">Day Streak</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-primary">6th</div>
+                <div className="text-2xl font-bold text-primary">-</div>
                 <div className="text-xs text-muted-foreground">Rank</div>
               </div>
             </div>
