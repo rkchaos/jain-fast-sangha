@@ -87,12 +87,12 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ onBack, onComple
 
   const handleJoin = async (sanghaId: string) => {
     try {
-      // Join the sangha - get current user or use userData from signup
-      const currentUserId = user?.id;
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUserId = session?.user?.id;
       
       if (!currentUserId) {
-        // If user state isn't ready yet, show a friendlier message
-        toast.error('Authentication in progress, please try again in a moment', { duration: 5000 });
+        toast.error('Please wait a moment and try again', { duration: 5000 });
         return;
       }
 
@@ -118,11 +118,12 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ onBack, onComple
     if (!createForm.name.trim()) return;
     
     try {
-      // Get current user or wait for auth state
-      const currentUserId = user?.id;
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUserId = session?.user?.id;
       
       if (!currentUserId) {
-        toast.error('Authentication in progress, please try again in a moment', { duration: 5000 });
+        toast.error('Please wait a moment and try again', { duration: 5000 });
         return;
       }
 
@@ -187,11 +188,6 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ onBack, onComple
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground">Loading sanghas...</p>
-            </div>
-          ) : !user ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Setting up your account...</p>
             </div>
           ) : filteredSanghas.length === 0 ? (
             <div className="text-center py-8">
