@@ -35,51 +35,54 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
 
     setLoading(true);
     try {
-      // Check if identifier is email or phone
+      // Check if identifier is email or phone and find the user
       const isEmail = formData.identifier.includes('@');
       
-      let profileData;
+      let userEmail;
       if (isEmail) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('email', formData.identifier)
-          .maybeSingle();
-        
-        if (error || !data) {
-          throw new Error('No account found with this email. Please create an account first.');
-        }
-        profileData = data;
+        // Direct email login
+        userEmail = formData.identifier;
       } else {
-        const { data, error } = await supabase
+        // Phone number - find the email from profiles
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('email')
           .eq('phone', formData.identifier)
           .maybeSingle();
         
-        if (error || !data) {
-          throw new Error('No account found with this phone. Please create an account first.');
+        if (profileError || !profileData) {
+          toast.error('No account found with this phone. Please create an account first.', { duration: 5000 });
+          return;
         }
-        profileData = data;
+        userEmail = profileData.email;
       }
 
       // Sign in with email and password
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: profileData.email,
+        email: userEmail,
         password: formData.password
       });
 
       if (authError) {
         if (authError.message.includes('Invalid login credentials')) {
-          toast.error('Incorrect password. Please try again.', { duration: 5000 });
+          toast.error('Incorrect email/phone or password. Please try again.', { duration: 5000 });
+        } else if (authError.message.includes('User not found')) {
+          toast.error('No account found with this email. Please create an account first.', { duration: 5000 });
         } else {
-          throw authError;
+          toast.error(authError.message, { duration: 5000 });
         }
         return;
       }
 
       if (authData.user) {
-        toast.success(`Welcome back, ${profileData.name}! 🙏`, { duration: 5000 });
+        // Get user's profile to show name
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', authData.user.id)
+          .maybeSingle();
+        
+        toast.success(`Welcome back, ${profile?.name || 'User'}! 🙏`, { duration: 5000 });
       }
     } catch (error: any) {
       console.error('Login error:', error);

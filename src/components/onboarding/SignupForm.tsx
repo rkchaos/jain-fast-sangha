@@ -47,15 +47,26 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
 
     setLoading(true);
     try {
-      // Check if user already exists
-      const { data: existingUser } = await supabase
+      // Check if user already exists by checking both email and phone
+      const { data: existingByEmail } = await supabase
         .from('profiles')
-        .select('email, phone')
-        .or(`email.eq.${formData.email},phone.eq.${formData.phone}`)
+        .select('email')
+        .eq('email', formData.email)
         .maybeSingle();
 
-      if (existingUser) {
-        toast.error('Account already exists. Please try logging in instead.', { duration: 5000 });
+      const { data: existingByPhone } = await supabase
+        .from('profiles')  
+        .select('phone')
+        .eq('phone', formData.phone)
+        .maybeSingle();
+
+      if (existingByEmail) {
+        toast.error('An account with this email already exists. Please try logging in instead.', { duration: 5000 });
+        return;
+      }
+
+      if (existingByPhone) {
+        toast.error('An account with this phone number already exists. Please try logging in instead.', { duration: 5000 });
         return;
       }
 
@@ -80,27 +91,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
       }
 
       if (authData.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            otp_verified: true
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-        }
-
         toast.success(`Welcome ${formData.name}! Account created successfully.`, { duration: 5000 });
         
-        // Small delay to ensure auth state is updated before moving to next step
+        // Wait a bit for the auth state to fully process
         setTimeout(() => {
           onSignup(formData);
-        }, 1000);
+        }, 1500);
       }
     } catch (error: any) {
       console.error('Signup error:', error);
