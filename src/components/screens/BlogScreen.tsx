@@ -73,7 +73,8 @@ export function BlogScreen() {
 
   const fetchBlogs = async () => {
     try {
-      const { data, error } = await supabase
+      // Get all approved blogs for public view
+      const { data: approvedBlogs, error: approvedError } = await supabase
         .from('blogs')
         .select(`
           *,
@@ -84,16 +85,38 @@ export function BlogScreen() {
         .eq('approved', true)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (approvedError) throw approvedError;
 
-      const blogsWithCounts = data?.map(blog => ({
+      let allBlogs = approvedBlogs || [];
+
+      // If user is logged in, also get their pending blogs
+      if (user) {
+        const { data: userBlogs, error: userError } = await supabase
+          .from('blogs')
+          .select(`
+            *,
+            profiles:user_id (name),
+            blog_likes (id, user_id),
+            blog_comments (id)
+          `)
+          .eq('user_id', user.id)
+          .eq('approved', false)
+          .order('created_at', { ascending: false });
+
+        if (userError) throw userError;
+
+        // Merge user's pending blogs with approved blogs
+        allBlogs = [...(userBlogs || []), ...allBlogs];
+      }
+
+      const blogsWithCounts = allBlogs.map(blog => ({
         ...blog,
         user_name: blog.profiles?.name || 'Anonymous',
         likes_count: blog.blog_likes?.length || 0,
         comments_count: blog.blog_comments?.length || 0,
         is_liked: user ? blog.blog_likes?.some((like: any) => like.user_id === user.id) : false,
         needs_review: !blog.approved && blog.user_id === user?.id
-      })) || [];
+      }));
 
       setBlogs(blogsWithCounts);
     } catch (error) {

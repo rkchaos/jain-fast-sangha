@@ -44,7 +44,7 @@ export function SettingsScreen() {
   const userProfile = {
     name: profile?.name || "Your Name",
     email: profile?.email || "your.email@example.com",
-    sanghas: ["Mumbai Jain Centre", "Delhi Jain Community"],
+    sanghas: [],
     joinDate: "January 2024"
   };
 
@@ -173,19 +173,17 @@ export function SettingsScreen() {
               </div>
             </div>
             
-            <div>
-              <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
-                <Users className="h-4 w-4" />
-                Sangha Memberships
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {userProfile.sanghas.map((sangha) => (
-                  <Badge key={sangha} variant="secondary">
-                    {sangha}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={() => {
+                const mailtoLink = `mailto:rahul@rashtechnologies.com?cc=aayush@rashtechnologies.com,namo@rashtechnologies.com&subject=Tapasya%20Tracker%20Feedback&body=Hi%20team,%0A%0AI%20would%20like%20to%20share%20feedback%20about%20the%20Tapasya%20Tracker%20app:%0A%0A`;
+                window.location.href = mailtoLink;
+              }}
+            >
+              <Mail className="h-4 w-4" />
+              Contact Us
+            </Button>
             
             <div className="space-y-2">
               <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>

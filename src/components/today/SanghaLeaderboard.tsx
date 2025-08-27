@@ -60,12 +60,12 @@ export function SanghaLeaderboard({ userSanghas }: SanghaLeaderboardProps) {
     
     setLoading(true);
     try {
-      // Get sangha members
+      // Get sangha members with their profiles
       const { data: members, error: membersError } = await supabase
         .from('memberships')
         .select(`
           user_id,
-          profiles:user_id (id, name, email, phone)
+          profiles!inner (id, name, email, phone)
         `)
         .eq('sangha_id', selectedSangha);
 

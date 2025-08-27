@@ -220,6 +220,7 @@ export const RetrospectiveTab: React.FC<RetrospectiveTabProps> = ({
                 <SelectItem value="all">All Sanghas</SelectItem>
                 <SelectItem value="s1">S1</SelectItem>
                 <SelectItem value="s2">S2</SelectItem>
+                <SelectItem value="s3">S3</SelectItem>
               </SelectContent>
             </Select>
 
@@ -313,7 +314,12 @@ export const RetrospectiveTab: React.FC<RetrospectiveTabProps> = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {motivationalInsights.slice(0, 3).map((insight, index) => (
+            <div className="p-3 bg-background/50 rounded-lg">
+              <p className="text-sm text-foreground">
+                📊 <strong>Note:</strong> Also show in progress functionality in PAST
+              </p>
+            </div>
+            {motivationalInsights.slice(0, 2).map((insight, index) => (
               <div key={index} className="p-3 bg-background/50 rounded-lg">
                 <p className="text-sm text-foreground">{insight}</p>
               </div>

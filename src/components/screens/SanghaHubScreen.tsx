@@ -90,7 +90,7 @@ export function SanghaHubScreen() {
         .from('memberships')
         .select(`
           *,
-          sanghas (*)
+          sanghas!inner (*)
         `)
         .eq('user_id', user.id);
       

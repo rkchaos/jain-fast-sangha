@@ -161,7 +161,7 @@ export const CalendarPage: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
-          <TabsTrigger value="retrospective">Retrospective</TabsTrigger>
+          <TabsTrigger value="retrospective">PAST</TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-4">
