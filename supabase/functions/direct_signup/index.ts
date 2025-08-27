@@ -115,18 +115,18 @@ serve(async (req) => {
       );
     }
 
-    // Generate magic link for login
+    // Generate magic link for instant auto-login
     const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: email,
+      options: {
+        redirectTo: `${supabaseUrl.replace('/rest/v1', '')}/auth/v1/callback?redirect_to=${encodeURIComponent('https://f0b60ec9-eade-480a-a80b-389f8ada8e30.sandbox.lovable.dev/')}`
+      }
     });
 
     if (magicLinkError) {
       console.error("Error generating magic link:", magicLinkError);
-      return new Response(
-        JSON.stringify({ error: "User created but login failed" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      // Don't fail signup if magic link fails - user can login manually later
     }
 
     return new Response(
@@ -138,7 +138,8 @@ serve(async (req) => {
           name: name,
           phone: phone,
         },
-        login_url: magicLinkData.properties?.action_link,
+        login_url: magicLinkData?.properties?.action_link || null,
+        message: "Account created successfully! You'll be logged in automatically."
       }),
       {
         status: 200,

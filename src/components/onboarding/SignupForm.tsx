@@ -57,6 +57,13 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
         throw new Error(data.error);
       }
 
+      if (data.success && data.login_url) {
+        // Automatically navigate to magic link for instant login
+        window.location.href = data.login_url;
+        return;
+      }
+
+      // Fallback: manual navigation to next step
       toast.success(`Welcome ${formData.name}! Account created successfully.`);
       onSignup(formData);
     } catch (error: any) {
