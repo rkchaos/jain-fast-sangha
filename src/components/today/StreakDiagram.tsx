@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { History, Trophy, Target } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface StreakDiagramProps {
-  userId: string;
+  userId?: string;
   currentStreak?: number;
   range?: '30' | '90' | '365';
   onViewHistory?: () => void;
@@ -19,21 +21,43 @@ export const StreakDiagram: React.FC<StreakDiagramProps> = ({
   onViewHistory
 }) => {
   const [selectedRange, setSelectedRange] = useState(range);
+  const [userData, setUserData] = useState({ total: 0, completed: 0, percentage: 0 });
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
-  const getRangeData = (range: string) => {
-    switch (range) {
-      case '30':
-        return { total: 30, completed: 18, percentage: 60 };
-      case '90':
-        return { total: 90, completed: 45, percentage: 50 };
-      case '365':
-        return { total: 365, completed: 128, percentage: 35 };
-      default:
-        return { total: 30, completed: 18, percentage: 60 };
+  const fetchUserData = async (days: number) => {
+    const currentUserId = userId || user?.id;
+    if (!currentUserId) return;
+    
+    setLoading(true);
+    try {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      
+      const { data, error } = await supabase
+        .from('vrat_records')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .gte('date', startDate.toISOString().split('T')[0]);
+      
+      if (error) throw error;
+      
+      const completed = data.filter(record => record.status === 'success').length;
+      const percentage = days > 0 ? Math.round((completed / days) * 100) : 0;
+      
+      setUserData({ total: days, completed, percentage });
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      setUserData({ total: days, completed: 0, percentage: 0 });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const data = getRangeData(selectedRange);
+  useEffect(() => {
+    const days = selectedRange === '30' ? 30 : selectedRange === '90' ? 90 : 365;
+    fetchUserData(days);
+  }, [selectedRange, user, userId]);
 
   return (
     <Card className="bg-gradient-jade text-jade-foreground shadow-gentle">
@@ -70,19 +94,21 @@ export const StreakDiagram: React.FC<StreakDiagramProps> = ({
           </TabsList>
         </Tabs>
 
-        {/* Progress Circle Representation */}
+        {/* Progress Representation */}
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
-            <span>Completed: {data.completed}</span>
-            <span>Goal: {data.total}</span>
+            <span>
+              {loading ? 'Loading...' : `Completed: ${userData.completed}`}
+            </span>
+            <span>Goal: {userData.total}</span>
           </div>
           <Progress 
-            value={data.percentage} 
+            value={userData.percentage} 
             className="h-3 bg-jade-foreground/20"
           />
           <div className="flex items-center justify-center gap-2 text-sm opacity-90">
             <Target className="h-3 w-3" />
-            <span>{data.percentage}% completion rate</span>
+            <span>{userData.percentage}% completion rate</span>
           </div>
         </div>
       </CardContent>

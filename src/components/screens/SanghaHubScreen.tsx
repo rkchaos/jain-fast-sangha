@@ -28,7 +28,7 @@ interface UserSangha extends Sangha {
 }
 
 export function SanghaHubScreen() {
-  const [activeTab, setActiveTab] = useState('join');
+  const [activeTab, setActiveTab] = useState('leaderboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [availableSanghas, setAvailableSanghas] = useState<Sangha[]>([]);
   const [userSanghas, setUserSanghas] = useState<UserSangha[]>([]);
@@ -216,11 +216,8 @@ export function SanghaHubScreen() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Mobile Layout */}
           <div className="md:hidden">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="my-sanghas">My Sangha</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-            </TabsList>
-            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="join">Join</TabsTrigger>
               <TabsTrigger value="create">Create</TabsTrigger>
             </TabsList>
@@ -228,11 +225,10 @@ export function SanghaHubScreen() {
           
           {/* Desktop Layout */}
           <div className="hidden md:block">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
               <TabsTrigger value="join">Join Sangha</TabsTrigger>
               <TabsTrigger value="create">Create New Sangha</TabsTrigger>
-              <TabsTrigger value="my-sanghas">My Sanghas</TabsTrigger>
-              <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
             </TabsList>
           </div>
 
@@ -359,54 +355,94 @@ export function SanghaHubScreen() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="my-sanghas" className="space-y-4">
-            {userSanghas.length > 0 ? (
-              <div className="grid gap-4">
-                {userSanghas.map((sangha) => (
-                  <Card key={sangha.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-lg">{sangha.name}</CardTitle>
-                          <CardDescription>{sangha.description}</CardDescription>
-                        </div>
-                        <Badge variant={sangha.role === 'admin' ? 'default' : 'secondary'}>
-                          {sangha.role === 'admin' ? 'Admin' : 'Member'}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          Joined {new Date(sangha.joined_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <Users className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">No Sanghas Yet</h3>
-                <p className="text-muted-foreground mb-6">Join or create your first sangha to get started</p>
-                <div className="flex gap-2 justify-center">
-                  <Button onClick={() => setActiveTab('join')} variant="outline">
-                    Join Sangha
-                  </Button>
-                  <Button onClick={() => setActiveTab('create')}>
-                    Create Sangha
-                  </Button>
-                </div>
-              </div>
-            )}
-          </TabsContent>
-
           <TabsContent value="leaderboard" className="space-y-4">
             <SanghaLeaderboard userSanghas={userSanghas} />
           </TabsContent>
         </Tabs>
+
+        {/* WhatsApp Share Template */}
+        <div className="mt-8 p-4 bg-muted/50 rounded-lg">
+          <h3 className="font-semibold mb-2">📱 Share with Community</h3>
+          <p className="text-sm text-muted-foreground mb-3">Copy this message to share on WhatsApp:</p>
+          <div className="p-3 bg-background rounded border text-sm">
+            🙏 **Samvatsari Tapasya Tracker** 🙏<br/><br/>
+            
+            Celebrate this auspicious Samvatsari with mindful fasting! Track your spiritual journey with our new webapp:<br/><br/>
+            
+            🔗 **tapasyatracker.rashtechnologies.com**<br/><br/>
+            
+            ✨ **Features:**<br/>
+            📊 Track daily vrats (Upvas, Ekasna, Ayambil)<br/>
+            🏆 Join Sangha leaderboards<br/>
+            📈 View progress analytics<br/>
+            💬 Community support<br/><br/>
+            
+            📱 **Coming Soon:** Mobile app for even easier tracking!<br/>
+            🎥 **Demo video** launching this week<br/><br/>
+            
+            Join our community and make this Samvatsari more meaningful. Try it today and share your feedback! 🙏<br/><br/>
+            
+            #Samvatsari2024 #TapasyaTracker #JainCommunity
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2"
+            onClick={() => {
+              navigator.clipboard.writeText(`🙏 Samvatsari Tapasya Tracker 🙏
+
+Celebrate this auspicious Samvatsari with mindful fasting! Track your spiritual journey with our new webapp:
+
+🔗 tapasyatracker.rashtechnologies.com
+
+✨ Features:
+📊 Track daily vrats (Upvas, Ekasna, Ayambil)
+🏆 Join Sangha leaderboards  
+📈 View progress analytics
+💬 Community support
+
+📱 Coming Soon: Mobile app for even easier tracking!
+🎥 Demo video launching this week
+
+Join our community and make this Samvatsari more meaningful. Try it today and share your feedback! 🙏
+
+#Samvatsari2024 #TapasyaTracker #JainCommunity`);
+              toast.success('Message copied to clipboard!');
+            }}
+          >
+            Copy WhatsApp Message
+          </Button>
+        </div>
+
+        {/* Backend Access Info */}
+        <div className="mt-6 p-4 bg-accent/20 rounded-lg">
+          <h3 className="font-semibold mb-2">🔧 Backend Management</h3>
+          <p className="text-sm text-muted-foreground mb-3">Admin access for content management:</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+            <a 
+              href="https://supabase.com/dashboard/project/jakdsjslactlnullqtec/editor" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="p-2 bg-background rounded border hover:bg-muted/50"
+            >
+              📊 Database Editor - Manage users, vrats, sanghas
+            </a>
+            <a 
+              href="https://supabase.com/dashboard/project/jakdsjslactlnullqtec/auth/users" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="p-2 bg-background rounded border hover:bg-muted/50"
+            >
+              👥 User Management - View registered users
+            </a>
+            <div className="p-2 bg-background rounded border">
+              📝 Blog Approval - Update `approved` column in `blogs` table
+            </div>
+            <div className="p-2 bg-background rounded border">
+              📰 News Management - Add/edit entries in `news` table
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
