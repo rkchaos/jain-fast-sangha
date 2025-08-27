@@ -7,9 +7,9 @@ interface HeroWelcomeProps {
   onSignup?: () => void;
   onLogin?: () => void;
 }
-import mahavir from '@/assets/mahavir-swami.png';
+import prayingHands from '@/assets/praying_hands.png';
 export const HeroWelcome: React.FC<HeroWelcomeProps> = ({
-  imageSrc = mahavir,
+  imageSrc = prayingHands,
   headline = "Tapasya Tracker",
   subText = "Jai Jinendra - A simple place to track your fasting, join your sangha",
   onSignup,

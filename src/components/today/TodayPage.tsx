@@ -17,7 +17,7 @@ import { useVratRecords } from '@/hooks/useVratRecords';
 import { VratType, VratStatus } from '@/types/database';
 import { toast } from 'sonner';
 
-import mahavir from '@/assets/mahavir-swami.png';
+import prayingHands from '@/assets/praying_hands.png';
 
 // Jain Dharma information content
 const jainDharmaInfo = {
@@ -136,12 +136,12 @@ export const TodayPage: React.FC = () => {
         📝 Share Your Feedback
       </Button>
 
-      {/* Mahavir Bhagwan Image */}
+      {/* Praying Hands Image */}
       <div className="flex justify-center mb-6">
         <div className="w-32 h-32 rounded-full overflow-hidden shadow-sacred">
           <img 
-            src={mahavir} 
-            alt="Bhagwan Mahavir" 
+            src={prayingHands} 
+            alt="Praying Hands" 
             className="w-full h-full object-cover"
           />
         </div>
