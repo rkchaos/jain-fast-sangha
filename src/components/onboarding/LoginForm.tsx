@@ -12,62 +12,59 @@ interface LoginFormProps {
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }) => {
-  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [cooldown, setCooldown] = useState(0);
-
-  // Cooldown timer
-  React.useEffect(() => {
-    if (cooldown > 0) {
-      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [cooldown]);
-
-  const validateEmail = (email: string) => {
-    return /\S+@\S+\.\S+/.test(email);
-  };
+  const [identifier, setIdentifier] = useState(''); // email or phone
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (cooldown > 0) {
-      setError(`Please wait ${cooldown} seconds before requesting another link`);
-      return;
-    }
-    
-    if (!email.trim()) {
-      setError('Email is required');
+    if (!identifier) {
+      toast.error('Please enter your email or phone number');
       return;
     }
 
-    if (!validateEmail(email)) {
-      setError('Please enter a valid email address');
-      return;
-    }
-
-    setError('');
     setLoading(true);
-    
     try {
-      const { data, error } = await supabase.functions.invoke('send_magic_link', {
-        body: { email: email.trim() }
-      });
-
-      if (error) throw error;
-
-      toast.success('Login link sent! Check your email to continue.');
-      setCooldown(60); // Set 60 second cooldown
-    } catch (error: any) {
-      console.error('Error sending magic link:', error);
-      if (error.message?.includes('No account found')) {
-        setError('No account found with this email. Please sign up first.');
-      } else if (error.message?.includes('Too many requests')) {
-        setError('Too many requests. Please wait before trying again.');
-        setCooldown(60);
+      // Check if identifier is email or phone
+      const isEmail = identifier.includes('@');
+      
+      let profileData;
+      if (isEmail) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('email', identifier)
+          .single();
+        
+        if (error) throw new Error('User not found');
+        profileData = data;
       } else {
-        setError('Failed to send login link. Please try again.');
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('phone', identifier)
+          .single();
+        
+        if (error) throw new Error('User not found');
+        profileData = data;
+      }
+
+      if (profileData) {
+        // Simple login - sign in with default password
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: profileData.email,
+          password: 'defaultpass123'
+        });
+
+        if (authError) throw authError;
+
+        toast.success(`Welcome back, ${profileData.name}! 🙏`);
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      if (error.message === 'User not found') {
+        toast.error('No account found with this email/phone. Please create an account first.');
+      } else {
+        toast.error('Login failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -80,33 +77,32 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl text-foreground">Welcome Back</CardTitle>
           <p className="text-sm text-muted-foreground">
-            We'll send you a magic link to login
+            Sign in to continue your tapasya journey
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="identifier">Email or Phone Number</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your.email@example.com"
-                className={error ? 'border-destructive' : ''}
+                id="identifier"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="Enter your email or phone number"
+                required
                 disabled={loading}
               />
-              {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
 
             <div className="space-y-3 pt-4">
               <Button 
                 type="submit" 
-                className="w-full" 
-                size="lg" 
-                disabled={loading || cooldown > 0}
+                className="w-full bg-gradient-sacred hover:shadow-floating" 
+                disabled={loading}
+                size="lg"
               >
-                {loading ? 'Sending...' : cooldown > 0 ? `Wait ${cooldown}s` : 'Send Login Link'}
+                {loading ? 'Signing In...' : 'Sign In'}
               </Button>
               
               <div className="text-center space-y-2">
