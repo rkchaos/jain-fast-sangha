@@ -46,29 +46,33 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ onBack, onComple
 
   const fetchSanghas = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch sanghas and their member counts separately to avoid recursion
+      const { data: sanghaData, error: sanghaError } = await supabase
         .from('sanghas')
-        .select(`
-          id,
-          name,
-          description,
-          privacy,
-          created_at,
-          memberships!inner(id)
-        `)
+        .select('id, name, description, privacy, created_at')
         .eq('privacy', 'public');
 
-      if (error) throw error;
+      if (sanghaError) throw sanghaError;
 
-      const transformedSanghas = data?.map(sangha => ({
-        id: sangha.id,
-        name: sangha.name,
-        memberCount: sangha.memberships?.length || 0,
-        location: 'India', // Default location
-        isPrivate: sangha.privacy === 'private'
-      })) || [];
+      // Get member counts for each sangha
+      const sanghasWithCounts = await Promise.all(
+        (sanghaData || []).map(async (sangha) => {
+          const { count } = await supabase
+            .from('memberships')
+            .select('*', { count: 'exact', head: true })
+            .eq('sangha_id', sangha.id);
 
-      setSanghas(transformedSanghas);
+          return {
+            id: sangha.id,
+            name: sangha.name,
+            memberCount: count || 0,
+            location: 'India', // Default location
+            isPrivate: sangha.privacy === 'private'
+          };
+        })
+      );
+
+      setSanghas(sanghasWithCounts);
     } catch (error) {
       console.error('Error fetching sanghas:', error);
       setSanghas([]);
