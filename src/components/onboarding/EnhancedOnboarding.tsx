@@ -14,10 +14,10 @@ type OnboardingStep = 'welcome' | 'signup' | 'login' | 'sangha';
 export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
   const [userData, setUserData] = useState<{
-    name?: string;
-    phone?: string;
-    email?: string;
-  }>({});
+    name: string;
+    phone: string;
+    email: string;
+  } | null>(null);
 
   const handleWelcome = () => {
     // This function is no longer needed since we have separate handlers
@@ -29,13 +29,8 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
     toast.success("Account created! Now let's find your Sangha community");
   };
 
-  const handleJoinSangha = (sanghaId: string) => {
-    toast.success("Welcome to Jain Sangha! 🙏 You're all set to begin your spiritual journey");
-    onComplete();
-  };
-
-  const handleCreateSangha = (sangha: { name: string; privacy: 'public' | 'private'; description?: string }) => {
-    toast.success(`${sangha.name} created! 🎉 Your new Sangha is ready. Invite others to join!`);
+  const handleSanghaSelection = () => {
+    toast.success("Welcome! 🙏 You're all set to begin your spiritual journey");
     onComplete();
   };
 
@@ -67,9 +62,9 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
     case 'sangha':
       return (
         <SanghaSelector
-          userId="new-user"
-          onJoin={handleJoinSangha}
-          onCreate={handleCreateSangha}
+          onBack={() => setCurrentStep('signup')}
+          onComplete={handleSanghaSelection}
+          userData={userData}
         />
       );
     

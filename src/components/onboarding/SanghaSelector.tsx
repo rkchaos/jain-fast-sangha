@@ -18,9 +18,9 @@ interface Sangha {
 }
 
 interface SanghaSelectorProps {
-  userId: string;
-  onJoin: (sanghaId: string) => void;
-  onCreate: (sangha: { name: string; privacy: 'public' | 'private'; description?: string }) => void;
+  onBack: () => void;
+  onComplete: () => void;
+  userData?: { name: string; phone: string; email: string } | null;
 }
 
 import { supabase } from '@/integrations/supabase/client';
@@ -28,7 +28,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
-export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ userId, onJoin, onCreate }) => {
+export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ onBack, onComplete, userData }) => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -82,55 +82,70 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ userId, onJoin, 
   );
 
   const handleJoin = async (sanghaId: string) => {
+    if (!user?.id) {
+      toast.error('Please log in first');
+      return;
+    }
+
     try {
-      onJoin(sanghaId);
-      
-      // Send welcome email
-      if (user?.email) {
-        await fetch('/functions/v1/send_welcome_email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: user.email,
-            name: user.user_metadata?.full_name
-          }),
+      // Join the sangha
+      const { error } = await supabase
+        .from('memberships')
+        .insert({
+          user_id: user.id,
+          sangha_id: sanghaId,
+          role: 'member'
         });
-      }
+
+      if (error) throw error;
+
+      toast.success('Successfully joined sangha!');
+      onComplete();
     } catch (error) {
       console.error('Error joining sangha:', error);
+      toast.error('Failed to join sangha');
     }
   };
 
   const handleCreate = async () => {
-    if (createForm.name.trim()) {
-      try {
-        onCreate({
+    if (!createForm.name.trim()) return;
+    if (!user?.id) {
+      toast.error('Please log in first');
+      return;
+    }
+
+    try {
+      // Create new sangha
+      const { data: sanghaData, error: sanghaError } = await supabase
+        .from('sanghas')
+        .insert({
           name: createForm.name.trim(),
           privacy: createForm.privacy,
-          description: createForm.description.trim() || undefined
+          description: createForm.description.trim() || null
+        })
+        .select()
+        .single();
+
+      if (sanghaError) throw sanghaError;
+
+      // Join the newly created sangha as admin
+      const { error: memberError } = await supabase
+        .from('memberships')
+        .insert({
+          user_id: user.id,
+          sangha_id: sanghaData.id,
+          role: 'admin'
         });
-        
-        // Send welcome email
-        if (user?.email) {
-          await fetch('/functions/v1/send_welcome_email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: user.email,
-              name: user.user_metadata?.full_name
-            }),
-          });
-        }
-        
-        setIsCreateModalOpen(false);
-        setCreateForm({ name: '', privacy: 'public', description: '' });
-      } catch (error) {
-        console.error('Error creating sangha:', error);
-      }
+
+      if (memberError) throw memberError;
+
+      toast.success('Sangha created successfully!');
+      setIsCreateModalOpen(false);
+      setCreateForm({ name: '', privacy: 'public', description: '' });
+      onComplete();
+    } catch (error) {
+      console.error('Error creating sangha:', error);
+      toast.error('Failed to create sangha');
     }
   };
 
@@ -262,6 +277,15 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ userId, onJoin, 
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Skip for now button */}
+        <Button variant="ghost" onClick={onComplete} className="w-full">
+          Skip for now
+        </Button>
+
+        <Button variant="outline" onClick={onBack} className="w-full">
+          Back
+        </Button>
       </div>
     </div>
   );

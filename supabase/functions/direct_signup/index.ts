@@ -60,10 +60,9 @@ serve(async (req) => {
       );
     }
 
-    // Create auth user with email
+    // Create auth user with email (passwordless)
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email: email,
-      password: 'temp_' + Math.random().toString(36), // Temporary password
       email_confirm: true, // Auto-confirm email
       user_metadata: {
         name: name,

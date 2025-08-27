@@ -35,7 +35,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
           .eq('email', identifier)
           .single();
         
-        if (error) throw new Error('User not found');
+        if (error || !data) {
+          throw new Error('No account found with this email. Please create an account first.');
+        }
         profileData = data;
       } else {
         const { data, error } = await supabase
@@ -44,30 +46,38 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
           .eq('phone', identifier)
           .single();
         
-        if (error) throw new Error('User not found');
+        if (error || !data) {
+          throw new Error('No account found with this phone. Please create an account first.');
+        }
         profileData = data;
       }
 
       if (profileData) {
-        // Send magic link for passwordless login
-        const { error: signInError } = await supabase.auth.signInWithOtp({
+        // Generate a magic link for instant login
+        const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
+          type: 'magiclink',
           email: profileData.email,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`
-          }
         });
 
-        if (signInError) throw signInError;
+        if (magicLinkError) {
+          // Fallback: try to sign in using the user's email directly
+          const { error: signInError } = await supabase.auth.signInWithOtp({
+            email: profileData.email,
+            options: {
+              emailRedirectTo: `${window.location.origin}/`
+            }
+          });
 
-        toast.success(`Magic link sent to ${profileData.email}! Check your email to sign in.`);
+          if (signInError) throw signInError;
+          toast.success(`Magic link sent to ${profileData.email}! Check your email to sign in.`);
+        } else if (magicLinkData.properties?.action_link) {
+          // Direct login using magic link
+          window.location.href = magicLinkData.properties.action_link;
+        }
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      if (error.message === 'User not found') {
-        toast.error('No account found with this email/phone. Please create an account first.');
-      } else {
-        toast.error('Login failed. Please try again.');
-      }
+      toast.error(error.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }

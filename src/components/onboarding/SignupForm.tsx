@@ -45,34 +45,28 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
       });
 
       if (error) {
+        console.error('Signup error:', error);
         throw error;
       }
 
       if (data.error) {
         if (data.error.includes('already exists') || data.type === 'phone_exists' || data.type === 'email_exists') {
           toast.error('Account already exists. Please try logging in instead.');
-          if (data.redirectToLogin) {
-            // Auto redirect to login after 2 seconds
-            setTimeout(() => {
-              window.location.hash = '#login';
-            }, 2000);
-          }
           return;
         }
         throw new Error(data.error);
-      }
-
-      if (data.success && data.login_url) {
-        // Navigate to the magic link URL to auto-login
-        window.location.href = data.login_url;
-        return;
       }
 
       toast.success(`Welcome ${formData.name}! Account created successfully.`);
       onSignup(formData);
     } catch (error: any) {
       console.error('Signup error:', error);
-      toast.error('Failed to create account. Please try again.');
+      
+      if (error.message?.includes('already exists') || error.message?.includes('already been registered')) {
+        toast.error('Account already exists. Please try logging in instead.');
+      } else {
+        toast.error(error.message || 'Failed to create account. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
