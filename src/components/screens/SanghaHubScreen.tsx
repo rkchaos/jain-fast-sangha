@@ -1,168 +1,378 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { 
-  Users, 
-  Plus, 
-  Crown, 
-  Trophy, 
-  Calendar, 
-  MessageCircle, 
-  Heart,
-  Flame,
-  Search,
-  MapPin,
-  Star
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Calendar, MapPin, Users, Trophy, Crown, Medal, Search, Plus, Clock } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
-interface SanghaGroup {
+interface Sangha {
   id: string;
   name: string;
-  description: string;
-  memberCount: number;
-  isJoined: boolean;
-  isAdmin: boolean;
-  banner: string;
-  location: string;
-  category: string;
-  weeklyGoal: number;
-  weeklyProgress: number;
+  description?: string;
+  privacy: 'public' | 'private';
+  created_at: string;
+  memberCount?: number;
 }
 
-interface LeaderboardEntry {
-  id: string;
-  name: string;
-  avatar?: string;
-  streak: number;
-  points: number;
-  checkIns: number;
-  rank: number;
+interface UserSangha extends Sangha {
+  role: 'admin' | 'member';
+  joined_at: string;
 }
-
-interface GroupEvent {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  type: "fast" | "event" | "talent" | "spiritual";
-  rsvpCount: number;
-  isRsvped: boolean;
-}
-
-// Clear all static data - will be fetched from database
-const sanghaGroups: SanghaGroup[] = [];
-const leaderboardData: LeaderboardEntry[] = [];
-const groupEvents: GroupEvent[] = [];
 
 export function SanghaHubScreen() {
-  const [activeTab, setActiveTab] = useState("leaderboard"); // Default to leaderboard (only working tab)
-  const [searchQuery, setSearchQuery] = useState("");
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('join');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [availableSanghas, setAvailableSanghas] = useState<Sangha[]>([]);
+  const [userSanghas, setUserSanghas] = useState<UserSangha[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    city: '',
+    state: '',
+    communityType: ''
+  });
+  const { user } = useAuth();
 
-  const handleComingSoon = (feature: string) => {
-    toast({
-      title: "Coming Soon! 🚧",
-      description: `${feature} feature will be available in the next update.`,
-    });
-  };
+  useEffect(() => {
+    if (user) {
+      fetchAvailableSanghas();
+      fetchUserSanghas();
+    }
+  }, [user]);
 
-  const getRankIcon = (rank: number) => {
-    switch (rank) {
-      case 1: return <Crown className="w-4 h-4 text-yellow-500" />;
-      case 2: return <Trophy className="w-4 h-4 text-gray-400" />;
-      case 3: return <Star className="w-4 h-4 text-amber-600" />;
-      default: return <span className="w-4 h-4 flex items-center justify-center text-xs font-bold text-muted-foreground">#{rank}</span>;
+  const fetchAvailableSanghas = async () => {
+    try {
+      setLoading(true);
+      const { data: sanghas, error } = await supabase
+        .from('sanghas')
+        .select('*')
+        .eq('privacy', 'public');
+      
+      if (error) throw error;
+      
+      // Get member counts for each sangha
+      const sanghsWithCounts = await Promise.all(
+        sanghas.map(async (sangha) => {
+          const { count } = await supabase
+            .from('memberships')
+            .select('*', { count: 'exact' })
+            .eq('sangha_id', sangha.id);
+          
+          return {
+            ...sangha,
+            memberCount: count || 0
+          };
+        })
+      );
+      
+      setAvailableSanghas(sanghsWithCounts);
+    } catch (error: any) {
+      console.error('Error fetching sanghas:', error);
+      toast.error('Failed to load sanghas');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getEventIcon = (type: string) => {
-    switch (type) {
-      case "fast": return <Heart className="w-4 h-4 text-primary" />;
-      case "talent": return <Star className="w-4 h-4 text-jade" />;
-      case "spiritual": return <Crown className="w-4 h-4 text-secondary" />;
-      default: return <Calendar className="w-4 h-4" />;
+  const fetchUserSanghas = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: memberships, error } = await supabase
+        .from('memberships')
+        .select(`
+          *,
+          sanghas (*)
+        `)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      const userSanghas = memberships.map(membership => ({
+        ...membership.sanghas,
+        role: membership.role,
+        joined_at: membership.joined_at
+      }));
+      
+      setUserSanghas(userSanghas);
+    } catch (error: any) {
+      console.error('Error fetching user sanghas:', error);
     }
   };
 
-  const getEventTypeLabel = (type: string) => {
-    switch (type) {
-      case "fast": return "Fasting";
-      case "talent": return "Talent Show";
-      case "spiritual": return "Spiritual";
-      case "event": return "Community";
-      default: return "Event";
+  const handleJoinSangha = async (sanghaId: string) => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('memberships')
+        .insert({
+          user_id: user.id,
+          sangha_id: sanghaId,
+          role: 'member'
+        });
+      
+      if (error) throw error;
+      
+      toast.success('Successfully joined sangha!');
+      fetchUserSanghas();
+      fetchAvailableSanghas();
+    } catch (error: any) {
+      console.error('Error joining sangha:', error);
+      toast.error('Failed to join sangha');
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleCreateSangha = async () => {
+    if (!user || !createForm.name || !createForm.city || !createForm.state || !createForm.communityType) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      // Create sangha
+      const { data: sangha, error: sanghaError } = await supabase
+        .from('sanghas')
+        .insert({
+          name: createForm.name,
+          description: `${createForm.communityType} community in ${createForm.city}, ${createForm.state}`,
+          privacy: 'public'
+        })
+        .select()
+        .single();
+      
+      if (sanghaError) throw sanghaError;
+      
+      // Add creator as admin
+      const { error: membershipError } = await supabase
+        .from('memberships')
+        .insert({
+          user_id: user.id,
+          sangha_id: sangha.id,
+          role: 'admin'
+        });
+      
+      if (membershipError) throw membershipError;
+      
+      toast.success('Sangha created successfully!');
+      setCreateForm({ name: '', city: '', state: '', communityType: '' });
+      fetchUserSanghas();
+      fetchAvailableSanghas();
+    } catch (error: any) {
+      console.error('Error creating sangha:', error);
+      toast.error('Failed to create sangha');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredSanghas = availableSanghas.filter(sangha =>
+    sangha.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-dawn p-4 space-y-6">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Sangha Hub</h1>
-          <p className="text-muted-foreground">Connect • Grow • Inspire</p>
+      <div className="border-b border-border bg-card">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Sangha Hub</h1>
+              <p className="text-muted-foreground mt-1">Connect, grow, and find inspiration in your community</p>
+            </div>
+          </div>
         </div>
-        <Button variant="outline" size="icon" onClick={() => handleComingSoon('Create Sangha')}>
-          <Plus className="w-4 h-4" />
-        </Button>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="my-sanghas" onClick={() => handleComingSoon('My Sanghas')}>My Sanghas</TabsTrigger>
-          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-          <TabsTrigger value="events" onClick={() => handleComingSoon('Events')}>Events</TabsTrigger>
-        </TabsList>
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="join">Join Sangha</TabsTrigger>
+            <TabsTrigger value="create">Create New Sangha</TabsTrigger>
+            <TabsTrigger value="my-sanghas">My Sanghas</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="my-sanghas" className="space-y-4">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">My Sanghas feature coming soon!</p>
-            <Button onClick={() => handleComingSoon('My Sanghas')}>
-              Learn More
-            </Button>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="leaderboard" className="space-y-4">
-          <Card className="shadow-gentle">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Trophy className="w-5 h-5 text-primary" />
-                <span>Leaderboard</span>
-              </CardTitle>
-              <CardDescription>Track your progress and see how you're doing</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <Trophy className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Start Your Journey</h3>
-                <p className="text-muted-foreground mb-4">
-                  Complete your first vrat to appear on the leaderboard and track your spiritual progress.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Leaderboard data will be populated as more users join and track their vrats.
-                </p>
+          <TabsContent value="join" className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search sanghas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
 
-        <TabsContent value="events" className="space-y-4">
-          <div className="text-center py-12">
-            <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">Events feature coming soon!</p>
-            <Button onClick={() => handleComingSoon('Events')}>
-              Learn More
-            </Button>
-          </div>
-        </TabsContent>
-      </Tabs>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="text-muted-foreground mt-2">Loading sanghas...</p>
+              </div>
+            ) : filteredSanghas.length > 0 ? (
+              <div className="grid gap-4">
+                {filteredSanghas.map((sangha) => (
+                  <Card key={sangha.id}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{sangha.name}</CardTitle>
+                          <CardDescription>{sangha.description}</CardDescription>
+                        </div>
+                        <Button 
+                          onClick={() => handleJoinSangha(sangha.id)}
+                          disabled={loading}
+                        >
+                          Join
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                        <div className="flex items-center">
+                          <Users className="w-4 h-4 mr-1" />
+                          {sangha.memberCount} members
+                        </div>
+                        <Badge variant="secondary">{sangha.privacy}</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Users className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No Sanghas Found</h3>
+                <p className="text-muted-foreground">Try adjusting your search or create a new sangha</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="create" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Create New Sangha</CardTitle>
+                <CardDescription>Start a new community for spiritual growth</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sangha-name">Sangha Name</Label>
+                  <Input
+                    id="sangha-name"
+                    placeholder="Enter sangha name"
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City/District</Label>
+                    <Input
+                      id="city"
+                      placeholder="Enter city or district"
+                      value={createForm.city}
+                      onChange={(e) => setCreateForm(prev => ({ ...prev, city: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State</Label>
+                    <Input
+                      id="state"
+                      placeholder="Enter state"
+                      value={createForm.state}
+                      onChange={(e) => setCreateForm(prev => ({ ...prev, state: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="community-type">Community Type</Label>
+                  <Select 
+                    value={createForm.communityType} 
+                    onValueChange={(value) => setCreateForm(prev => ({ ...prev, communityType: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select community type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Shwetambar">Shwetambar</SelectItem>
+                      <SelectItem value="Digambar">Digambar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <Button 
+                  onClick={handleCreateSangha} 
+                  className="w-full"
+                  disabled={loading || !createForm.name || !createForm.city || !createForm.state || !createForm.communityType}
+                >
+                  {loading ? 'Creating...' : 'Create Sangha'}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="my-sanghas" className="space-y-4">
+            {userSanghas.length > 0 ? (
+              <div className="grid gap-4">
+                {userSanghas.map((sangha) => (
+                  <Card key={sangha.id}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{sangha.name}</CardTitle>
+                          <CardDescription>{sangha.description}</CardDescription>
+                        </div>
+                        <Badge variant={sangha.role === 'admin' ? 'default' : 'secondary'}>
+                          {sangha.role === 'admin' ? 'Admin' : 'Member'}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                        <div className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          Joined {new Date(sangha.joined_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Users className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No Sanghas Yet</h3>
+                <p className="text-muted-foreground mb-6">Join or create your first sangha to get started</p>
+                <div className="flex gap-2 justify-center">
+                  <Button onClick={() => setActiveTab('join')} variant="outline">
+                    Join Sangha
+                  </Button>
+                  <Button onClick={() => setActiveTab('create')}>
+                    Create Sangha
+                  </Button>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

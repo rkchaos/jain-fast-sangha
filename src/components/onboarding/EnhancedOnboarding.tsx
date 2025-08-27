@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { HeroWelcome } from './HeroWelcome';
 import { SignupForm } from './SignupForm';
 import { LoginForm } from './LoginForm';
-import { SanghaSelector } from './SanghaSelector';
 import { toast } from 'sonner';
 
 interface EnhancedOnboardingProps {
   onComplete: () => void;
 }
 
-type OnboardingStep = 'welcome' | 'signup' | 'login' | 'sangha';
+type OnboardingStep = 'welcome' | 'signup' | 'login';
 
 export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
@@ -27,19 +26,9 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
 
   const handleSignup = (data: { name: string; phone: string; email: string; password: string; confirmPassword: string }) => {
     setUserData(data);
-    // After successful signup, user is logged in automatically, go to sangha selection
-    setCurrentStep('sangha');
-    toast.success("Account created! Now let's find your Sangha community", { duration: 5000 });
-  };
-
-  const handleSanghaSelection = () => {
+    // After successful signup, user goes directly to home
     toast.success("Welcome! 🙏 You're all set to begin your spiritual journey", { duration: 5000 });
-    // Force navigation to complete the onboarding
     onComplete();
-  };
-
-  const handleBackToSignup = () => {
-    setCurrentStep('signup');
   };
 
   switch (currentStep) {
@@ -65,15 +54,6 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
         <LoginForm
           onBack={() => setCurrentStep('welcome')}
           onSwitchToSignup={() => setCurrentStep('signup')}
-        />
-      );
-    
-    case 'sangha':
-      return (
-        <SanghaSelector
-          onBack={handleBackToSignup}
-          onComplete={handleSanghaSelection}
-          userData={userData}
         />
       );
     
