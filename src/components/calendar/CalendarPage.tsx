@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,28 +8,60 @@ import { CalendarIcon, Trophy, TrendingUp, Plus } from 'lucide-react';
 import { RetrospectiveTab } from './RetrospectiveTab';
 import { PastEntryModal } from './PastEntryModal';
 import { toast } from '@/components/ui/use-toast';
+import { useVratRecords } from '@/hooks/useVratRecords';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CalendarEvent {
   date: Date;
   type: 'vrat' | 'festival' | 'custom';
   title: string;
   completed?: boolean;
+  id?: string;
 }
 
-// Mock calendar events
-const mockEvents: CalendarEvent[] = [
-  { date: new Date(2024, 11, 1), type: 'vrat', title: 'Upvas', completed: true },
-  { date: new Date(2024, 11, 3), type: 'festival', title: 'Purnima' },
-  { date: new Date(2024, 11, 5), type: 'vrat', title: 'Ekasna', completed: true },
-  { date: new Date(2024, 11, 8), type: 'vrat', title: 'Ayambil', completed: false },
-  { date: new Date(2024, 11, 15), type: 'festival', title: 'Das Lakshan Parva' },
-];
-
 export const CalendarPage: React.FC = () => {
+  const { user } = useAuth();
+  const { createVratRecord } = useVratRecords();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [activeTab, setActiveTab] = useState('calendar');
   const [showPastEntryModal, setShowPastEntryModal] = useState(false);
-  const [events, setEvents] = useState(mockEvents);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch vrat records from database
+  const fetchVratRecords = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('vrat_records')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      const calendarEvents: CalendarEvent[] = data.map(record => ({
+        id: record.id,
+        date: new Date(record.date),
+        type: 'vrat',
+        title: record.vrat_type,
+        completed: record.status === 'success'
+      }));
+
+      setEvents(calendarEvents);
+    } catch (error) {
+      console.error('Error fetching vrat records:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVratRecords();
+  }, [user]);
 
   const getEventsForDate = (date: Date) => {
     return events.filter(event => 
@@ -50,21 +82,23 @@ export const CalendarPage: React.FC = () => {
     }
   };
 
-  const handlePastEntry = (data: { type: string; completed: boolean }) => {
-    if (selectedDate) {
-      const newEvent: CalendarEvent = {
-        date: selectedDate,
-        type: 'vrat',
-        title: data.type,
-        completed: data.completed
-      };
+  const handlePastEntry = async (data: { type: string; completed: boolean }) => {
+    if (!selectedDate || !user) return;
+
+    try {
+      const status = data.completed ? 'success' : 'failed';
+      const dateStr = selectedDate.toISOString().split('T')[0];
       
-      // Remove any existing event for this date and add the new one
-      const updatedEvents = events.filter(event => 
-        event.date.toDateString() !== selectedDate.toDateString()
+      await createVratRecord(
+        data.type as any,
+        status as any,
+        undefined,
+        dateStr,
+        true // isRetrospective
       );
-      updatedEvents.push(newEvent);
-      setEvents(updatedEvents);
+      
+      // Refresh the calendar data
+      await fetchVratRecords();
       
       toast({
         title: data.completed ? "Entry Saved! ✨" : "Entry Recorded",
@@ -72,15 +106,23 @@ export const CalendarPage: React.FC = () => {
           ? `Your ${data.type} vrat has been marked as completed.`
           : `Your ${data.type} attempt has been recorded. Every effort counts!`
       });
+    } catch (error) {
+      console.error('Error saving past entry:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save entry. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
   const canAddPastEntry = (date: Date) => {
     const today = new Date();
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(today.getMonth() - 1);
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
     
-    return date >= oneMonthAgo && date < today;
+    // Allow entries for any past date (unlimited retrospective)
+    return date < today;
   };
 
   const modifiers = {
@@ -238,7 +280,7 @@ export const CalendarPage: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="retrospective">
-          <RetrospectiveTab userId="current-user" />
+          <RetrospectiveTab userId={user?.id || ''} />
         </TabsContent>
       </Tabs>
 

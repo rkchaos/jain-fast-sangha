@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,36 +7,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trophy, TrendingUp, Calendar, Download, Share, Target } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface RetrospectiveTabProps {
   userId: string;
   defaultRange?: '30' | '90' | '365';
 }
 
-// Mock data for retrospective
-const mockStats = {
-  '30': {
-    totalVrats: 12,
-    completed: 8,
-    completionRate: 67,
-    bestStreak: 7,
-    progressScore: 85
-  },
-  '90': {
-    totalVrats: 45,
-    completed: 32,
-    completionRate: 71,
-    bestStreak: 12,
-    progressScore: 78
-  },
-  '365': {
-    totalVrats: 128,
-    completed: 89,
-    completionRate: 70,
-    bestStreak: 15,
-    progressScore: 82
-  }
-};
+interface VratStats {
+  totalVrats: number;
+  completed: number;
+  completionRate: number;
+  bestStreak: number;
+  progressScore: number;
+}
 
 const positiveInsights = [
   "You're growing — celebrate this progress.",
@@ -67,8 +51,114 @@ export const RetrospectiveTab: React.FC<RetrospectiveTabProps> = ({
   const [selectedRange, setSelectedRange] = useState(defaultRange);
   const [selectedSangha, setSelectedSangha] = useState('all');
   const [selectedVratType, setSelectedVratType] = useState('all');
+  const [stats, setStats] = useState<VratStats>({
+    totalVrats: 0,
+    completed: 0,
+    completionRate: 0,
+    bestStreak: 0,
+    progressScore: 0
+  });
+  const [loading, setLoading] = useState(false);
+  const [recentActivity, setRecentActivity] = useState<boolean[]>([]);
 
-  const stats = mockStats[selectedRange];
+  // Calculate date range based on selected range
+  const getDateRange = () => {
+    const today = new Date();
+    const startDate = new Date();
+    
+    switch (selectedRange) {
+      case '30':
+        startDate.setDate(today.getDate() - 30);
+        break;
+      case '90':
+        startDate.setDate(today.getDate() - 90);
+        break;
+      case '365':
+        startDate.setFullYear(today.getFullYear() - 1);
+        break;
+      default:
+        startDate.setDate(today.getDate() - 30);
+    }
+    
+    return { startDate: startDate.toISOString().split('T')[0], endDate: today.toISOString().split('T')[0] };
+  };
+
+  // Fetch real stats from database
+  const fetchStats = async () => {
+    if (!userId) return;
+    
+    setLoading(true);
+    try {
+      const { startDate, endDate } = getDateRange();
+      
+      const { data, error } = await supabase
+        .from('vrat_records')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      const totalVrats = data.length;
+      const completed = data.filter(record => record.status === 'success').length;
+      const completionRate = totalVrats > 0 ? Math.round((completed / totalVrats) * 100) : 0;
+      
+      // Calculate best streak
+      const successDates = data
+        .filter(record => record.status === 'success')
+        .map(record => new Date(record.date))
+        .sort((a, b) => a.getTime() - b.getTime());
+      
+      let bestStreak = 0;
+      let currentStreak = 0;
+      
+      for (let i = 0; i < successDates.length; i++) {
+        if (i === 0) {
+          currentStreak = 1;
+        } else {
+          const daysDiff = Math.floor((successDates[i].getTime() - successDates[i-1].getTime()) / (1000 * 60 * 60 * 24));
+          if (daysDiff === 1) {
+            currentStreak++;
+          } else {
+            bestStreak = Math.max(bestStreak, currentStreak);
+            currentStreak = 1;
+          }
+        }
+      }
+      bestStreak = Math.max(bestStreak, currentStreak);
+      
+      const progressScore = Math.min(100, completionRate + (bestStreak * 2));
+      
+      setStats({
+        totalVrats,
+        completed,
+        completionRate,
+        bestStreak,
+        progressScore
+      });
+
+      // Generate recent activity for last 30 days
+      const last30Days = Array.from({ length: 30 }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (29 - i));
+        return date.toISOString().split('T')[0];
+      });
+
+      const activityMap = new Set(data.filter(r => r.status === 'success').map(r => r.date));
+      setRecentActivity(last30Days.map(date => activityMap.has(date)));
+      
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, [userId, selectedRange]);
 
   const handleExportCsv = () => {
     toast({
@@ -233,11 +323,11 @@ export const RetrospectiveTab: React.FC<RetrospectiveTabProps> = ({
         </CardHeader>
         <CardContent>
           <div className="flex space-x-2 overflow-x-auto pb-2">
-            {Array.from({ length: 30 }, (_, i) => (
+            {recentActivity.map((hasVrat, i) => (
               <div
                 key={i}
                 className={`w-3 h-3 rounded-full flex-shrink-0 ${
-                  Math.random() > 0.3 ? 'bg-primary' : 'bg-muted'
+                  hasVrat ? 'bg-primary' : 'bg-muted'
                 }`}
                 title={`Day ${30 - i}`}
               />
