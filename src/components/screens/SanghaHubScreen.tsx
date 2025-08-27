@@ -45,6 +45,28 @@ export function SanghaHubScreen() {
     if (user) {
       fetchAvailableSanghas();
       fetchUserSanghas();
+
+      // Set up real-time subscription for sangha changes
+      const channel = supabase
+        .channel('sangha-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'memberships'
+          },
+          () => {
+            console.log('Membership change detected, refreshing sanghas...');
+            fetchAvailableSanghas();
+            fetchUserSanghas();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 

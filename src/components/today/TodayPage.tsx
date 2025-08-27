@@ -151,15 +151,16 @@ export const TodayPage: React.FC = () => {
       <div className="space-y-4">
         {!isCheckedIn && !hasCompletedToday ? (
           <div className="space-y-3">
-            {/* Past Date Option */}
-            <div className="flex items-center space-x-3 p-3 bg-accent/20 rounded-lg">
+            {/* Past Date Option - More Prominent */}
+            <div className="flex items-center space-x-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <Checkbox 
                 id="past-date"
                 checked={isPastDate}
                 onCheckedChange={(checked) => setIsPastDate(checked as boolean)}
+                className="h-5 w-5"
               />
-              <Label htmlFor="past-date" className="cursor-pointer">
-                Record past vrat (retrospective entry)
+              <Label htmlFor="past-date" className="cursor-pointer text-base font-medium text-blue-800">
+                📅 Record past vrat (retrospective entry)
               </Label>
             </div>
 
