@@ -17,7 +17,7 @@ import { useVratRecords } from '@/hooks/useVratRecords';
 import { VratType, VratStatus } from '@/types/database';
 import { toast } from 'sonner';
 
-import mahavir from '@/assets/mahavir-bhagwan.jpg';
+import mahavir from '@/assets/mahavir-swami.png';
 
 // Jain Dharma information content
 const jainDharmaInfo = {

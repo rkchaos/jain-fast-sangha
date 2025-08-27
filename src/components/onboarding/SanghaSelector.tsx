@@ -25,11 +25,11 @@ interface SanghaSelectorProps {
 
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
-
-// Fetch sanghas from database
-const [sanghas, setSanghas] = useState<Sangha[]>([]);
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ userId, onJoin, onCreate }) => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [sanghas, setSanghas] = useState<Sangha[]>([]);
@@ -81,15 +81,56 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ userId, onJoin, 
     sangha.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleCreate = () => {
+  const handleJoin = async (sanghaId: string) => {
+    try {
+      onJoin(sanghaId);
+      
+      // Send welcome email
+      if (user?.email) {
+        await fetch('/functions/v1/send_welcome_email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: user.email,
+            name: user.user_metadata?.full_name
+          }),
+        });
+      }
+    } catch (error) {
+      console.error('Error joining sangha:', error);
+    }
+  };
+
+  const handleCreate = async () => {
     if (createForm.name.trim()) {
-      onCreate({
-        name: createForm.name.trim(),
-        privacy: createForm.privacy,
-        description: createForm.description.trim() || undefined
-      });
-      setIsCreateModalOpen(false);
-      setCreateForm({ name: '', privacy: 'public', description: '' });
+      try {
+        onCreate({
+          name: createForm.name.trim(),
+          privacy: createForm.privacy,
+          description: createForm.description.trim() || undefined
+        });
+        
+        // Send welcome email
+        if (user?.email) {
+          await fetch('/functions/v1/send_welcome_email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.user_metadata?.full_name
+            }),
+          });
+        }
+        
+        setIsCreateModalOpen(false);
+        setCreateForm({ name: '', privacy: 'public', description: '' });
+      } catch (error) {
+        console.error('Error creating sangha:', error);
+      }
     }
   };
 
@@ -147,7 +188,7 @@ export const SanghaSelector: React.FC<SanghaSelectorProps> = ({ userId, onJoin, 
                   </div>
                   <Button 
                     size="sm" 
-                    onClick={() => onJoin(sangha.id)}
+                    onClick={() => handleJoin(sangha.id)}
                     className="ml-4"
                   >
                     Join Sangha
