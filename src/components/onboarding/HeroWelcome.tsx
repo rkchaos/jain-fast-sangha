@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-
 interface HeroWelcomeProps {
   imageSrc?: string;
   headline?: string;
@@ -8,9 +7,7 @@ interface HeroWelcomeProps {
   onSignup?: () => void;
   onLogin?: () => void;
 }
-
 import mahavir from '@/assets/mahavir-swami.png';
-
 export const HeroWelcome: React.FC<HeroWelcomeProps> = ({
   imageSrc = mahavir,
   headline = "Tapasya Tracker",
@@ -18,30 +15,31 @@ export const HeroWelcome: React.FC<HeroWelcomeProps> = ({
   onSignup,
   onLogin
 }) => {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-dawn">
+  return <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-dawn">
       <div className="w-full max-w-md text-center space-y-8">
         {/* Hero Image */}
         <div className="w-48 h-48 mx-auto mb-8 rounded-full overflow-hidden shadow-sacred">
-          <img 
-            src={imageSrc} 
-            alt="Jain Sangha Welcome" 
-            className="w-full h-full object-cover"
-          />
+          <img src={imageSrc} alt="Jain Sangha Welcome" className="w-full max-h-full object-cover " />
         </div>
 
         {/* Headline */}
-        <h1 className="text-3xl font-bold text-foreground leading-tight" style={{ fontFamily: 'Merriweather, serif' }}>
+        <h1 className="text-3xl font-bold text-foreground leading-tight" style={{
+        fontFamily: 'Merriweather, serif'
+      }}>
           {headline}
         </h1>
         
         {/* Hindi Text */}
-        <p className="text-sm text-primary font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>
+        <p className="text-sm text-primary font-medium" style={{
+        fontFamily: 'Inter, sans-serif'
+      }}>
           जिन धर्म: जियो और जीने दो
         </p>
 
         {/* Sub Text */}
-        <p className="text-lg text-muted-foreground leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
+        <p className="text-lg text-muted-foreground leading-relaxed" style={{
+        fontFamily: 'Inter, sans-serif'
+      }}>
           {subText}
         </p>
         
@@ -56,33 +54,18 @@ export const HeroWelcome: React.FC<HeroWelcomeProps> = ({
 
         {/* CTA Buttons */}
         <div className="space-y-3">
-          <Button 
-            size="xl" 
-            className="w-full rounded-full bg-gradient-sacred hover:shadow-floating transition-all duration-300" 
-            onClick={onSignup}
-          >
+          <Button size="xl" className="w-full rounded-full bg-gradient-sacred hover:shadow-floating transition-all duration-300" onClick={onSignup}>
             Create Account
           </Button>
           
-          <Button 
-            variant="outline"
-            size="xl" 
-            className="w-full rounded-full" 
-            onClick={onLogin}
-          >
+          <Button variant="outline" size="xl" className="w-full rounded-full" onClick={onLogin}>
             Login
           </Button>
           
-          <Button 
-            variant="ghost"
-            size="sm" 
-            className="w-full text-primary hover:text-primary/80" 
-            onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLScA1d2Zj2yLi1VzbqOYoKVea7B4-MmtHsq1pngRQWipsU1RXQ/viewform?usp=sharing&ouid=110568833292812051355', '_blank')}
-          >
+          <Button variant="ghost" size="sm" className="w-full text-primary hover:text-primary/80" onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLScA1d2Zj2yLi1VzbqOYoKVea7B4-MmtHsq1pngRQWipsU1RXQ/viewform?usp=sharing&ouid=110568833292812051355', '_blank')}>
             📝 Share Feedback Instead
           </Button>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
