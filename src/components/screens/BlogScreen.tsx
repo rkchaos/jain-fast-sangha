@@ -39,6 +39,7 @@ interface Blog {
   likes_count?: number;
   comments_count?: number;
   is_liked?: boolean;
+  needs_review?: boolean;
 }
 
 const blogCategories = [
@@ -80,6 +81,7 @@ export function BlogScreen() {
           blog_likes (id, user_id),
           blog_comments (id)
         `)
+        .eq('approved', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -89,7 +91,8 @@ export function BlogScreen() {
         user_name: blog.profiles?.name || 'Anonymous',
         likes_count: blog.blog_likes?.length || 0,
         comments_count: blog.blog_comments?.length || 0,
-        is_liked: user ? blog.blog_likes?.some((like: any) => like.user_id === user.id) : false
+        is_liked: user ? blog.blog_likes?.some((like: any) => like.user_id === user.id) : false,
+        needs_review: !blog.approved && blog.user_id === user?.id
       })) || [];
 
       setBlogs(blogsWithCounts);
@@ -125,7 +128,7 @@ export function BlogScreen() {
 
       toast({
         title: "Blog Submitted!",
-        description: "Your blog has been submitted for approval and will be published soon.",
+        description: "Your blog has been submitted for review and will be visible once approved.",
       });
 
       setIsCreateModalOpen(false);
@@ -335,7 +338,7 @@ export function BlogScreen() {
         ) : (
           <div className="space-y-4">
             {filteredBlogs.map((blog) => (
-              <Card key={blog.id} className="shadow-gentle">
+              <Card key={blog.id} className={`shadow-gentle ${blog.needs_review ? 'border-yellow-500 bg-yellow-50/50' : ''}`}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3 mb-2">
                     <Avatar className="h-8 w-8">
@@ -349,6 +352,11 @@ export function BlogScreen() {
                         <Badge variant="outline" className="text-xs">
                           {blog.category}
                         </Badge>
+                        {blog.needs_review && (
+                          <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
+                            Under Review
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3" />

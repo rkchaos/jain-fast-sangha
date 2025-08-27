@@ -151,6 +151,7 @@ export type Database = {
       }
       blogs: {
         Row: {
+          approved: boolean | null
           category: Database["public"]["Enums"]["blog_category"] | null
           content: string
           created_at: string | null
@@ -163,6 +164,7 @@ export type Database = {
           youtube_url: string | null
         }
         Insert: {
+          approved?: boolean | null
           category?: Database["public"]["Enums"]["blog_category"] | null
           content: string
           created_at?: string | null
@@ -175,6 +177,7 @@ export type Database = {
           youtube_url?: string | null
         }
         Update: {
+          approved?: boolean | null
           category?: Database["public"]["Enums"]["blog_category"] | null
           content?: string
           created_at?: string | null

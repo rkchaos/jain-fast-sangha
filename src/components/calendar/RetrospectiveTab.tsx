@@ -91,13 +91,19 @@ export const RetrospectiveTab: React.FC<RetrospectiveTabProps> = ({
     try {
       const { startDate, endDate } = getDateRange();
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('vrat_records')
         .select('*')
         .eq('user_id', userId)
         .gte('date', startDate)
-        .lte('date', endDate)
-        .order('date', { ascending: false });
+        .lte('date', endDate);
+
+      // Apply vrat type filter
+      if (selectedVratType !== 'all') {
+        query = query.eq('vrat_type', selectedVratType as 'upvas' | 'ekasna' | 'ayambil' | 'other');
+      }
+
+      const { data, error } = await query.order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -158,7 +164,7 @@ export const RetrospectiveTab: React.FC<RetrospectiveTabProps> = ({
 
   useEffect(() => {
     fetchStats();
-  }, [userId, selectedRange]);
+  }, [userId, selectedRange, selectedVratType]);
 
   const handleExportCsv = () => {
     toast({
@@ -185,7 +191,7 @@ export const RetrospectiveTab: React.FC<RetrospectiveTabProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-xl font-bold text-foreground">Retrospective: Your Progress</h2>
+        <h2 className="text-xl font-bold text-foreground">PAST: Your Progress</h2>
         <p className="text-sm text-muted-foreground">
           Focus on growth — celebrate small wins.
         </p>
@@ -212,8 +218,8 @@ export const RetrospectiveTab: React.FC<RetrospectiveTabProps> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sanghas</SelectItem>
-                <SelectItem value="mumbai">Mumbai Jain Samaj</SelectItem>
-                <SelectItem value="delhi">Delhi Digambar</SelectItem>
+                <SelectItem value="s1">S1</SelectItem>
+                <SelectItem value="s2">S2</SelectItem>
               </SelectContent>
             </Select>
 
