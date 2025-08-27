@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Bell, 
   Clock, 
@@ -14,14 +17,23 @@ import {
   LogOut,
   Calendar,
   Moon,
-  Sun
+  Sun,
+  Key
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SettingsScreen() {
   const { signOut, profile } = useAuth();
   const { toast } = useToast();
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const [notifications, setNotifications] = useState({
     dailyPrompts: true,
     festivalAlerts: true,
@@ -45,14 +57,75 @@ export function SettingsScreen() {
       await signOut();
       toast({
         title: "Signed out successfully",
-        description: "You have been logged out of your account."
+        description: "You have been logged out of your account.",
+        duration: 5000
       });
     } catch (error) {
       toast({
         title: "Error signing out",
         description: "Please try again.",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 5000
       });
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+        duration: 5000
+      });
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "New passwords do not match",
+        variant: "destructive",
+        duration: 5000
+      });
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+        duration: 5000
+      });
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: passwordForm.newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password updated",
+        description: "Your password has been changed successfully",
+        duration: 5000
+      });
+      
+      setIsPasswordModalOpen(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update password",
+        variant: "destructive",
+        duration: 5000
+      });
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -114,13 +187,70 @@ export function SettingsScreen() {
               </div>
             </div>
             
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => handleComingSoon("Profile editing")}
-            >
-              Edit Profile
-            </Button>
+            <div className="space-y-2">
+              <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full">
+                    <Key className="h-4 w-4 mr-2" />
+                    Change Password
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-full max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Change Password</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="currentPassword">Current Password</Label>
+                      <Input
+                        id="currentPassword"
+                        type="password"
+                        value={passwordForm.currentPassword}
+                        onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                        placeholder="Enter current password"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword">New Password</Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                        placeholder="Enter new password"
+                        minLength={6}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        placeholder="Confirm new password"
+                        minLength={6}
+                      />
+                    </div>
+                    <Button 
+                      onClick={handlePasswordChange} 
+                      className="w-full" 
+                      disabled={passwordLoading}
+                    >
+                      {passwordLoading ? 'Updating...' : 'Update Password'}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => handleComingSoon("Profile editing")}
+              >
+                Edit Profile
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

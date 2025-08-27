@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface SignupFormProps {
-  onSignup: (data: { name: string; phone: string; email: string }) => void;
+  onSignup: (data: { name: string; phone: string; email: string; password: string; confirmPassword: string }) => void;
   onBack?: () => void;
 }
 
@@ -16,7 +16,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    password: '',
+    confirmPassword: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,52 +30,77 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.phone) {
-      toast.error('Please fill in all fields');
+    if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
+      toast.error('Please fill in all fields', { duration: 5000 });
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match', { duration: 5000 });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters', { duration: 5000 });
       return;
     }
 
     setLoading(true);
     try {
-      // Use direct signup edge function
-      const { data, error } = await supabase.functions.invoke('direct_signup', {
-        body: {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone
-        }
-      });
+      // Check if user already exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('email, phone')
+        .or(`email.eq.${formData.email},phone.eq.${formData.phone}`)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Signup error:', error);
-        throw error;
-      }
-
-      if (data.error) {
-        if (data.error.includes('already exists') || data.type === 'phone_exists' || data.type === 'email_exists') {
-          toast.error('Account already exists. Please try logging in instead.');
-          return;
-        }
-        throw new Error(data.error);
-      }
-
-      if (data.success && data.login_url) {
-        // Automatically navigate to magic link for instant login
-        window.location.href = data.login_url;
+      if (existingUser) {
+        toast.error('Account already exists. Please try logging in instead.', { duration: 5000 });
         return;
       }
 
-      // Fallback: manual navigation to next step
-      toast.success(`Welcome ${formData.name}! Account created successfully.`);
-      onSignup(formData);
+      // Create auth user with password
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            phone: formData.phone
+          }
+        }
+      });
+
+      if (authError) {
+        if (authError.message.includes('already registered')) {
+          toast.error('Account already exists. Please try logging in instead.', { duration: 5000 });
+          return;
+        }
+        throw authError;
+      }
+
+      if (authData.user) {
+        // Create profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            otp_verified: true
+          });
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+        }
+
+        toast.success(`Welcome ${formData.name}! Account created successfully.`, { duration: 5000 });
+        onSignup(formData);
+      }
     } catch (error: any) {
       console.error('Signup error:', error);
-      
-      if (error.message?.includes('already exists') || error.message?.includes('already been registered')) {
-        toast.error('Account already exists. Please try logging in instead.');
-      } else {
-        toast.error(error.message || 'Failed to create account. Please try again.');
-      }
+      toast.error(error.message || 'Failed to create account. Please try again.', { duration: 5000 });
     } finally {
       setLoading(false);
     }
@@ -126,6 +153,34 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSignup, onBack }) => {
                 onChange={handleChange}
                 placeholder="Enter your phone number"
                 required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                required
+                minLength={6}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password *</Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Confirm your password"
+                required
+                minLength={6}
               />
             </div>
 

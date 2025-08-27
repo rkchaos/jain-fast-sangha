@@ -23,14 +23,15 @@ export const EnhancedOnboarding: React.FC<EnhancedOnboardingProps> = ({ onComple
     // This function is no longer needed since we have separate handlers
   };
 
-  const handleSignup = (data: { name: string; phone: string; email: string }) => {
+  const handleSignup = (data: { name: string; phone: string; email: string; password: string; confirmPassword: string }) => {
     setUserData(data);
+    // After successful signup, user is logged in automatically, go to sangha selection
     setCurrentStep('sangha');
-    toast.success("Account created! Now let's find your Sangha community");
+    toast.success("Account created! Now let's find your Sangha community", { duration: 5000 });
   };
 
   const handleSanghaSelection = () => {
-    toast.success("Welcome! 🙏 You're all set to begin your spiritual journey");
+    toast.success("Welcome! 🙏 You're all set to begin your spiritual journey", { duration: 5000 });
     onComplete();
   };
 

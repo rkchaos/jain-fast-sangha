@@ -13,27 +13,38 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }) => {
   const [loading, setLoading] = useState(false);
-  const [identifier, setIdentifier] = useState(''); // email or phone
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    identifier: '', // email or phone
+    password: ''
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!identifier) {
-      toast.error('Please enter your email or phone number');
+    if (!formData.identifier || !formData.password) {
+      toast.error('Please enter both email/phone and password', { duration: 5000 });
       return;
     }
 
     setLoading(true);
     try {
       // Check if identifier is email or phone
-      const isEmail = identifier.includes('@');
+      const isEmail = formData.identifier.includes('@');
       
       let profileData;
       if (isEmail) {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('email', identifier)
-          .single();
+          .eq('email', formData.identifier)
+          .maybeSingle();
         
         if (error || !data) {
           throw new Error('No account found with this email. Please create an account first.');
@@ -43,8 +54,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('phone', identifier)
-          .single();
+          .eq('phone', formData.identifier)
+          .maybeSingle();
         
         if (error || !data) {
           throw new Error('No account found with this phone. Please create an account first.');
@@ -52,34 +63,56 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
         profileData = data;
       }
 
-      if (profileData) {
-        // Generate a magic link for instant login
-        const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
-          type: 'magiclink',
-          email: profileData.email,
-        });
+      // Sign in with email and password
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: profileData.email,
+        password: formData.password
+      });
 
-        if (magicLinkError) {
-          // Fallback: try to sign in using the user's email directly
-          const { error: signInError } = await supabase.auth.signInWithOtp({
-            email: profileData.email,
-            options: {
-              emailRedirectTo: `${window.location.origin}/`
-            }
-          });
-
-          if (signInError) throw signInError;
-          toast.success(`Magic link sent to ${profileData.email}! Check your email to sign in.`);
-        } else if (magicLinkData.properties?.action_link) {
-          // Direct login using magic link
-          window.location.href = magicLinkData.properties.action_link;
+      if (authError) {
+        if (authError.message.includes('Invalid login credentials')) {
+          toast.error('Incorrect password. Please try again.', { duration: 5000 });
+        } else {
+          throw authError;
         }
+        return;
+      }
+
+      if (authData.user) {
+        toast.success(`Welcome back, ${profileData.name}! 🙏`, { duration: 5000 });
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error(error.message || 'Login failed. Please try again.');
+      toast.error(error.message || 'Login failed. Please try again.', { duration: 5000 });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!formData.identifier) {
+      toast.error('Please enter your email first', { duration: 5000 });
+      return;
+    }
+
+    const isEmail = formData.identifier.includes('@');
+    if (!isEmail) {
+      toast.error('Please enter your email address for password reset', { duration: 5000 });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.identifier, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+
+      if (error) throw error;
+      
+      toast.success('Password reset email sent! Check your inbox.', { duration: 5000 });
+      setShowForgotPassword(false);
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast.error('Failed to send password reset email', { duration: 5000 });
     }
   };
 
@@ -98,10 +131,25 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
               <Label htmlFor="identifier">Email or Phone Number</Label>
               <Input
                 id="identifier"
+                name="identifier"
                 type="text"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                value={formData.identifier}
+                onChange={handleChange}
                 placeholder="Enter your email or phone number"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
                 required
                 disabled={loading}
               />
@@ -118,6 +166,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack, onSwitchToSignup }
               </Button>
               
               <div className="text-center space-y-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-muted-foreground"
+                  disabled={loading}
+                >
+                  Forgot Password?
+                </Button>
+                
                 <Button
                   type="button"
                   variant="ghost"
