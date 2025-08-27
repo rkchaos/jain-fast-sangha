@@ -52,6 +52,40 @@ export function SanghaLeaderboard({ userSanghas }: SanghaLeaderboardProps) {
   useEffect(() => {
     if (selectedSangha) {
       fetchSanghaLeaderboard();
+      
+      // Set up real-time subscription for membership changes
+      const channel = supabase
+        .channel('sangha-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'memberships',
+            filter: `sangha_id=eq.${selectedSangha}`
+          },
+          () => {
+            console.log('Membership change detected, refreshing leaderboard...');
+            fetchSanghaLeaderboard();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'vrat_records'
+          },
+          () => {
+            console.log('Vrat record change detected, refreshing leaderboard...');
+            fetchSanghaLeaderboard();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [selectedSangha]);
 
@@ -60,14 +94,16 @@ export function SanghaLeaderboard({ userSanghas }: SanghaLeaderboardProps) {
     
     setLoading(true);
     try {
-      // Get sangha members with their profiles
+      // Get sangha members with their profiles using proper join
       const { data: members, error: membersError } = await supabase
         .from('memberships')
         .select(`
           user_id,
-          profiles!inner (id, name, email, phone)
+          profiles!memberships_user_id_fkey (id, name, email, phone)
         `)
         .eq('sangha_id', selectedSangha);
+
+      console.log('Fetched members for sangha:', selectedSangha, members);
 
       if (membersError) throw membersError;
 
@@ -134,6 +170,13 @@ export function SanghaLeaderboard({ userSanghas }: SanghaLeaderboardProps) {
       const topStreak = leaderboardData.length > 0 ? leaderboardData[0].streak : 0;
 
       setMetrics({
+        totalMembers,
+        activeMembers,
+        averageStreak,
+        topStreak
+      });
+
+      console.log('Leaderboard metrics updated:', {
         totalMembers,
         activeMembers,
         averageStreak,
