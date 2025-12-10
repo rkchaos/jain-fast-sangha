@@ -94,15 +94,12 @@ export function SanghaLeaderboard({ userSanghas }: SanghaLeaderboardProps) {
     
     setLoading(true);
     try {
-      // Get sangha members - try multiple approaches
+      // Get sangha members
       console.log('Fetching members for sangha ID:', selectedSangha);
       
       const { data: members, error: membersError } = await supabase
         .from('memberships')
-        .select(`
-          user_id,
-          profiles (id, name, email, phone)
-        `)
+        .select('user_id')
         .eq('sangha_id', selectedSangha);
 
       console.log('Raw members data:', members);
@@ -110,9 +107,18 @@ export function SanghaLeaderboard({ userSanghas }: SanghaLeaderboardProps) {
 
       if (membersError) throw membersError;
 
+      // Fetch profiles for all members
+      const userIds = members?.map(m => m.user_id) || [];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name, email, phone')
+        .in('user_id', userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+
       // Calculate streaks for each member
       const leaderboardData = await Promise.all(
-        members.map(async (member) => {
+        (members || []).map(async (member) => {
           const { data: vrats } = await supabase
             .from('vrat_records')
             .select('date, status')
@@ -147,11 +153,12 @@ export function SanghaLeaderboard({ userSanghas }: SanghaLeaderboardProps) {
             }
           }
 
+          const profile = profileMap.get(member.user_id);
           return {
             id: member.user_id,
-            name: member.profiles?.name || 'Anonymous',
-            email: member.profiles?.email || '',
-            phone: member.profiles?.phone || '',
+            name: profile?.name || 'Anonymous',
+            email: profile?.email || '',
+            phone: profile?.phone || '',
             streak,
             rank: 0 // Will be set after sorting
           };
