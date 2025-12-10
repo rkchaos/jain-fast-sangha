@@ -78,7 +78,6 @@ export function BlogScreen() {
         .from('blogs')
         .select(`
           *,
-          profiles:user_id (name),
           blog_likes (id, user_id),
           blog_comments (id)
         `)
@@ -95,7 +94,6 @@ export function BlogScreen() {
           .from('blogs')
           .select(`
             *,
-            profiles:user_id (name),
             blog_likes (id, user_id),
             blog_comments (id)
           `)
@@ -109,9 +107,18 @@ export function BlogScreen() {
         allBlogs = [...(userBlogs || []), ...allBlogs];
       }
 
+      // Fetch profile names for all blog authors
+      const userIds = [...new Set(allBlogs.map(blog => blog.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name')
+        .in('user_id', userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p.name]) || []);
+
       const blogsWithCounts = allBlogs.map(blog => ({
         ...blog,
-        user_name: blog.profiles?.name || 'Anonymous',
+        user_name: profileMap.get(blog.user_id) || 'Anonymous',
         likes_count: blog.blog_likes?.length || 0,
         comments_count: blog.blog_comments?.length || 0,
         is_liked: user ? blog.blog_likes?.some((like: any) => like.user_id === user.id) : false,
