@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Trophy, Crown, Medal, Users, Mail, Phone } from 'lucide-react';
+import { Trophy, Crown, Medal, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,8 +20,6 @@ interface LeaderboardUser {
   name: string;
   streak: number;
   rank: number;
-  email?: string;
-  phone?: string;
 }
 
 interface SanghaMetrics {
@@ -111,7 +109,7 @@ export function SanghaLeaderboard({ userSanghas }: SanghaLeaderboardProps) {
       const userIds = members?.map(m => m.user_id) || [];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, name, email, phone')
+        .select('user_id, name')
         .in('user_id', userIds);
 
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
@@ -157,8 +155,6 @@ export function SanghaLeaderboard({ userSanghas }: SanghaLeaderboardProps) {
           return {
             id: member.user_id,
             name: profile?.name || 'Anonymous',
-            email: profile?.email || '',
-            phone: profile?.phone || '',
             streak,
             rank: 0 // Will be set after sorting
           };
@@ -319,20 +315,9 @@ export function SanghaLeaderboard({ userSanghas }: SanghaLeaderboardProps) {
                           </Avatar>
                           <div>
                             <p className="font-medium text-sm">{member.name}</p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              {member.email && (
-                                <div className="flex items-center gap-1">
-                                  <Mail className="h-3 w-3" />
-                                  {member.email}
-                                </div>
-                              )}
-                              {member.phone && (
-                                <div className="flex items-center gap-1">
-                                  <Phone className="h-3 w-3" />
-                                  {member.phone}
-                                </div>
-                              )}
-                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {member.streak} day streak
+                            </p>
                           </div>
                         </div>
                         <Badge variant="outline">{member.streak} days</Badge>
