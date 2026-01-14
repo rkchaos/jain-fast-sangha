@@ -39,13 +39,13 @@ serve(async (req) => {
       );
     }
 
-    // Send magic link with explicit redirect URL
-    const baseUrl = 'https://id-preview--f0b60ec9-eade-480a-a80b-389f8ada8e30.lovable.app';
+    // Send magic link with production redirect URL
+    const productionUrl = 'https://jain-fast-sangha.lovable.app';
     
     const { data, error } = await supabase.auth.signInWithOtp({
       email: email,
       options: {
-        emailRedirectTo: baseUrl,
+        emailRedirectTo: productionUrl,
         shouldCreateUser: false, // Don't create user if doesn't exist
       }
     });

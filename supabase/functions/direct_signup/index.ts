@@ -115,12 +115,13 @@ serve(async (req) => {
       );
     }
 
-    // Generate magic link for instant auto-login
+    // Generate magic link for instant auto-login - use production URL
+    const productionUrl = 'https://jain-fast-sangha.lovable.app';
     const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: email,
       options: {
-        redirectTo: `${supabaseUrl.replace('/rest/v1', '')}/auth/v1/callback?redirect_to=${encodeURIComponent('https://f0b60ec9-eade-480a-a80b-389f8ada8e30.sandbox.lovable.dev/')}`
+        redirectTo: productionUrl
       }
     });
 
