@@ -12,7 +12,12 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Ensure a single AuthContext instance even during HMR / duplicated module resolution
+const AUTH_CONTEXT_KEY = '__TAPASYA_AUTH_CONTEXT__';
+const AuthContext: ReturnType<typeof createContext<AuthContextType | undefined>> =
+  (globalThis as any)[AUTH_CONTEXT_KEY] ?? createContext<AuthContextType | undefined>(undefined);
+(globalThis as any)[AUTH_CONTEXT_KEY] = AuthContext;
+AuthContext.displayName = 'AuthContext';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
